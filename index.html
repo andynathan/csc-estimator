@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#080A0E">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CSC Estimator">
+<title>CSC Room Estimator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=DM+Mono:wght@400;500&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+/* ── RESET & BASE ───────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:#080A0E}
+button{cursor:pointer;border:none;background:none;font-family:inherit}
+input{font-family:inherit;border:none;outline:none}
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+
+/* ── VARIABLES ──────────────────────────────────────── */
+:root{
+  --bg:#080A0E;
+  --s1:#0F1218;
+  --s2:#161B25;
+  --s3:#1E2430;
+  --bdr:#252B38;
+  --muted:#4A5568;
+  --text:#E2E8F4;
+  --orange:#FF6200;
+  --orange-dim:rgba(255,98,0,0.12);
+  --orange-glow:rgba(255,98,0,0.25);
+  --green:#00C87A;
+  --red:#FF4455;
+  --font-display:'Barlow Condensed',sans-serif;
+  --font-mono:'DM Mono',monospace;
+  --font-body:'Barlow',sans-serif;
+  --safe-top:env(safe-area-inset-top,20px);
+  --safe-bot:env(safe-area-inset-bottom,20px);
+}
+
+/* ── APP SHELL ──────────────────────────────────────── */
+#app{
+  position:fixed;inset:0;
+  display:flex;flex-direction:column;
+  font-family:var(--font-body);
+  color:var(--text);
+  background:var(--bg);
+  overflow:hidden;
+}
+
+/* ── PROGRESS BAR ───────────────────────────────────── */
+#progress{
+  position:fixed;top:0;left:0;right:0;height:2px;
+  background:var(--s3);z-index:100;
+}
+#progress-fill{
+  height:100%;background:var(--orange);
+  transition:width .4s cubic-bezier(.4,0,.2,1);width:0%;
+}
+
+/* ── SCREENS ────────────────────────────────────────── */
+.screen{
+  display:none;flex-direction:column;
+  height:100%;overflow:hidden;
+  animation:fadeUp .25s ease;
+}
+.screen.active{display:flex}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── SCROLL AREA ────────────────────────────────────── */
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.scroll::-webkit-scrollbar{display:none}
+
+/* ── SHARED HEADER ──────────────────────────────────── */
+.hdr{
+  padding:calc(var(--safe-top) + 6px) 20px 16px;
+  border-bottom:1px solid var(--bdr);
+  background:var(--s1);flex-shrink:0;
+}
+.hdr-row{display:flex;align-items:center;gap:14px}
+.back-btn{
+  width:34px;height:34px;border-radius:50%;
+  background:var(--s3);border:1px solid var(--bdr);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;color:var(--text);flex-shrink:0;
+}
+.hdr-title{font-family:var(--font-display);font-size:28px;font-weight:900;letter-spacing:-.5px}
+.hdr-sub{color:var(--muted);font-size:12px;margin-top:2px;font-family:var(--font-mono)}
+
+/* ── BUTTONS ────────────────────────────────────────── */
+.btn{
+  width:100%;padding:16px;border-radius:10px;
+  font-family:var(--font-mono);font-size:14px;font-weight:500;
+  letter-spacing:.5px;transition:all .15s;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+}
+.btn-primary{background:var(--orange);color:#fff}
+.btn-primary:active{background:#e05500;transform:scale(.98)}
+.btn-secondary{background:transparent;border:1px solid var(--bdr);color:var(--text)}
+.btn-secondary:active{border-color:var(--orange);color:var(--orange)}
+.btn-ghost{color:var(--muted);font-size:13px;padding:12px}
+.btn:disabled{opacity:.35;pointer-events:none}
+
+/* ── FOOTER AREA ────────────────────────────────────── */
+.footer{
+  padding:14px 20px calc(var(--safe-bot) + 10px);
+  border-top:1px solid var(--bdr);background:var(--s1);
+  flex-shrink:0;display:flex;flex-direction:column;gap:10px;
+}
+
+/* ══════════════════════════════════════════════════════
+   SCREEN 1: HOME
+══════════════════════════════════════════════════════ */
+#scr-home{background:var(--bg)}
+
+.home-hero{
+  padding:calc(var(--safe-top) + 10px) 24px 28px;
+  background:linear-gradient(180deg,var(--s1) 0%,var(--bg) 100%);
+  border-bottom:1px solid var(--bdr);position:relative;overflow:hidden;
+  flex-shrink:0;
+}
+.home-hero::after{
+  content:'';position:absolute;top:-80px;right:-60px;
+  width:260px;height:260px;border-radius:50%;
+  background:radial-gradient(circle,var(--orange-glow) 0%,transparent 70%);
+  pointer-events:none;
+}
+.home-badge{
+  display:inline-flex;align-items:center;gap:7px;
+  background:var(--orange-dim);border:1px solid rgba(255,98,0,.3);
+  border-radius:4px;padding:5px 10px;margin-bottom:18px;
+}
+.home-badge-dot{width:6px;height:6px;border-radius:50%;background:var(--orange)}
+.home-badge-txt{font-family:var(--font-mono);font-size:10px;color:var(--orange);letter-spacing:2px}
+.home-title{
+  font-family:var(--font-display);font-size:52px;font-weight:900;
+  line-height:.95;letter-spacing:-2px;margin-bottom:10px;
+}
+.home-title span{color:var(--orange)}
+.home-sub{color:var(--muted);font-size:14px;line-height:1.5}
+
+.home-body{padding:22px 20px;display:flex;flex-direction:column;gap:12px}
+
+.cover-card{
+  background:var(--s1);border:1px solid var(--bdr);
+  border-radius:12px;padding:16px;margin-top:4px;
+}
+.cover-label{
+  font-family:var(--font-mono);font-size:9px;color:var(--muted);
+  letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;
+}
+.cover-row{
+  display:flex;align-items:center;gap:12px;padding:9px 0;
+  border-bottom:1px solid var(--s3);
+}
+.cover-row:last-child{border-bottom:none}
+.cover-icon{font-size:18px;width:24px;text-align:center}
+.cover-name{
+  flex:1;font-family:var(--font-mono);font-size:12px;
+  font-weight:500;letter-spacing:.5px;
+}
+.cover-range{font-family:var(--font-mono);font-size:11px;color:var(--muted)}
+
+/* ══════════════════════════════════════════════════════
+   SCREEN 2: CAMERA MEASURE
+══════════════════════════════════════════════════════ */
+#scr-camera{position:relative;background:#000}
+
+#cam-video{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;
+}
+#cam-canvas{
+  position:absolute;inset:0;width:100%;height:100%;
+  touch-action:none;
+}
+
+.cam-hud{
+  position:absolute;inset:0;display:flex;
+  flex-direction:column;justify-content:space-between;
+  pointer-events:none;
+}
+
+.cam-topbar{
+  padding:calc(var(--safe-top) + 6px) 16px 10px;
+  display:flex;align-items:center;justify-content:space-between;
+  pointer-events:auto;
+}
+.cam-close{
+  width:40px;height:40px;border-radius:50%;
+  background:rgba(0,0,0,.65);border:none;
+  color:#fff;font-size:20px;
+  display:flex;align-items:center;justify-content:center;
+}
+.cam-pill{
+  display:flex;align-items:center;gap:7px;
+  background:rgba(0,0,0,.72);border-radius:20px;
+  padding:8px 14px;border:1px solid var(--orange);
+}
+.cam-pill-dot{width:8px;height:8px;border-radius:50%;background:var(--orange);animation:blink 1.2s ease infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.cam-pill-txt{font-family:var(--font-mono);font-size:11px;color:#fff;letter-spacing:1px}
+.cam-reset{
+  width:40px;height:40px;border-radius:50%;
+  background:rgba(0,0,0,.65);color:var(--orange);
+  font-family:var(--font-mono);font-size:10px;letter-spacing:.5px;
+  display:flex;align-items:center;justify-content:center;
+  pointer-events:auto;
+}
+
+.cam-banner{
+  align-self:center;
+  background:rgba(0,0,0,.78);border-radius:8px;
+  padding:10px 18px;border:1px solid var(--orange-glow);
+  max-width:90%;margin:0 auto;
+}
+.cam-banner-txt{font-size:13px;text-align:center;line-height:1.5;color:var(--text)}
+
+.cam-bottom{
+  background:rgba(8,10,14,.93);
+  border-top:1px solid var(--bdr);
+  padding:16px 20px calc(var(--safe-bot) + 12px);
+  display:flex;flex-direction:column;gap:12px;
+  pointer-events:auto;
+}
+
+/* Calibration panel */
+.cal-panel{
+  background:var(--s2);border:1px solid var(--bdr);
+  border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;
+}
+.cal-label{font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.cal-row{display:flex;gap:10px;align-items:center}
+.cal-wall-select{
+  flex:1;background:var(--s3);border:1px solid var(--bdr);
+  border-radius:8px;padding:10px 12px;color:var(--text);
+  font-family:var(--font-mono);font-size:13px;
+  -webkit-appearance:none;
+}
+.cal-input{
+  width:90px;background:var(--s3);border:1px solid var(--bdr);
+  border-radius:8px;padding:10px 12px;color:var(--orange);
+  font-family:var(--font-mono);font-size:18px;font-weight:500;
+  text-align:center;
+}
+.cal-unit{font-family:var(--font-mono);font-size:12px;color:var(--muted)}
+
+/* Live dim boxes */
+.dim-boxes{display:flex;gap:8px}
+.dim-box{
+  flex:1;background:var(--s2);border:1px solid var(--bdr);
+  border-radius:8px;padding:10px;text-align:center;
+}
+.dim-box-lbl{font-family:var(--font-mono);font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:4px}
+.dim-box-val{font-family:var(--font-mono);font-size:20px;font-weight:500;color:var(--orange)}
+
+/* ══════════════════════════════════════════════════════
+   SCREEN 3: DIMENSIONS
+══════════════════════════════════════════════════════ */
+.totals-bar{
+  display:flex;background:var(--s1);
+  border-bottom:1px solid var(--bdr);flex-shrink:0;
+}
+.total-item{flex:1;text-align:center;padding:12px 8px}
+.total-val{font-family:var(--font-mono);font-size:22px;font-weight:500;color:var(--orange)}
+.total-lbl{font-family:var(--font-mono);font-size:9px;color:var(--muted);letter-spacing:1px;margin-top:2px}
+.total-div{width:1px;background:var(--bdr);margin:8px 0}
+
+.rooms-list{padding:18px;display:flex;flex-direction:column;gap:14px}
+
+.room-card{
+  background:var(--s1);border:1px solid var(--bdr);
+  border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:14px;
+}
+.room-card-hdr{display:flex;align-items:center;gap:8px}
+.type-scroll{flex:1;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.type-scroll::-webkit-scrollbar{display:none}
+.type-chips{display:flex;gap:6px;width:max-content}
+.chip{
+  background:var(--s3);border:1px solid var(--bdr);
+  border-radius:6px;padding:6px 10px;white-space:nowrap;
+  font-family:var(--font-mono);font-size:11px;font-weight:500;
+  color:var(--muted);transition:all .15s;
+}
+.chip.active{background:var(--orange-dim);border-color:var(--orange);color:var(--orange)}
+.remove-btn{
+  width:30px;height:30px;border-radius:6px;
+  background:rgba(255,68,85,.1);border:1px solid rgba(255,68,85,.2);
+  color:var(--red);font-size:14px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+
+.dim-inputs{display:flex;gap:10px}
+.dim-group{flex:1;display:flex;flex-direction:column;gap:6px;align-items:center}
+.dim-lbl{font-family:var(--font-mono);font-size:9px;color:var(--muted);letter-spacing:1px}
+.dim-input{
+  width:100%;background:var(--s2);border:1px solid var(--bdr);
+  border-radius:8px;padding:12px 8px;color:var(--text);
+  font-family:var(--font-mono);font-size:22px;font-weight:500;
+  text-align:center;transition:border-color .15s;
+}
+.dim-input:focus{border-color:var(--orange)}
+.dim-unit{font-family:var(--font-mono);font-size:10px;color:var(--muted)}
+
+.room-calc{
+  font-family:var(--font-mono);font-size:11px;color:var(--muted);
+  display:flex;gap:8px;flex-wrap:wrap;align-items:center;
+}
+.room-calc-sep{color:var(--bdr)}
+
+.add-room{
+  border:1px dashed var(--bdr);border-radius:10px;
+  padding:15px;display:flex;align-items:center;justify-content:center;
+  gap:8px;transition:all .15s;
+}
+.add-room:active{border-color:var(--orange)}
+.add-room-txt{font-family:var(--font-mono);font-size:13px;color:var(--muted);font-weight:500}
+
+.ar-badge{
+  background:var(--orange-dim);border:1px solid rgba(255,98,0,.25);
+  border-radius:8px;padding:10px 14px;margin-bottom:4px;
+}
+.ar-badge-txt{font-family:var(--font-mono);font-size:11px;color:var(--orange);text-align:center}
+
+/* ══════════════════════════════════════════════════════
+   SCREEN 4: WORK TYPES
+══════════════════════════════════════════════════════ */
+.work-list{padding:18px;display:flex;flex-direction:column;gap:10px}
+
+.work-card{
+  background:var(--s1);border:1px solid var(--bdr);
+  border-radius:12px;padding:16px 18px;
+  display:flex;align-items:center;gap:14px;
+  transition:all .15s;
+}
+.work-card.on{background:var(--orange-dim);border-color:var(--orange)}
+.work-icon-box{
+  width:44px;height:44px;border-radius:10px;
+  background:var(--s3);display:flex;align-items:center;
+  justify-content:center;font-size:22px;flex-shrink:0;
+  transition:background .15s;
+}
+.work-card.on .work-icon-box{background:var(--orange-dim)}
+.work-info{flex:1}
+.work-name{
+  font-family:var(--font-mono);font-size:14px;font-weight:500;
+  letter-spacing:.5px;transition:color .15s;
+}
+.work-card.on .work-name{color:var(--orange)}
+.work-note{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.4}
+.work-check{
+  width:24px;height:24px;border-radius:50%;
+  border:2px solid var(--bdr);
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;flex-shrink:0;
+}
+.work-card.on .work-check{background:var(--orange);border-color:var(--orange)}
+.work-check-inner{color:#fff;font-size:13px;font-weight:700;display:none}
+.work-card.on .work-check-inner{display:block}
+
+/* ══════════════════════════════════════════════════════
+   SCREEN 5: ESTIMATE
+══════════════════════════════════════════════════════ */
+#scr-estimate .scroll{background:var(--bg)}
+
+.est-hero{
+  background:linear-gradient(135deg,var(--s1) 0%,#0A0E16 100%);
+  padding:calc(var(--safe-top) + 8px) 22px 24px;
+  border-bottom:1px solid var(--bdr);
+  position:relative;overflow:hidden;flex-shrink:0;
+}
+.est-hero::after{
+  content:'';position:absolute;bottom:-50px;right:-50px;
+  width:200px;height:200px;border-radius:50%;
+  background:radial-gradient(circle,var(--orange-glow) 0%,transparent 70%);
+  pointer-events:none;
+}
+.est-back{
+  display:flex;align-items:center;gap:6px;
+  font-family:var(--font-mono);font-size:11px;color:var(--muted);
+  letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;
+  background:none;border:none;
+}
+.est-eyebrow{
+  font-family:var(--font-mono);font-size:10px;color:var(--muted);
+  letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;
+}
+.est-total{
+  font-family:var(--font-display);font-size:54px;font-weight:900;
+  letter-spacing:-2px;color:var(--orange);line-height:1;margin-bottom:8px;
+}
+.est-meta{font-family:var(--font-mono);font-size:12px;color:var(--muted)}
+
+.est-content{padding:18px;display:flex;flex-direction:column;gap:12px}
+
+.meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.meta-card{
+  background:var(--s1);border:1px solid var(--bdr);
+  border-radius:8px;padding:14px;text-align:center;
+}
+.meta-val{font-family:var(--font-mono);font-size:22px;font-weight:500;color:var(--orange)}
+.meta-lbl{font-family:var(--font-mono);font-size:9px;color:var(--muted);letter-spacing:1px;margin-top:3px}
+
+.rooms-summary{
+  background:var(--s1);border:1px solid var(--bdr);border-radius:10px;overflow:hidden;
+}
+.rooms-summary-hdr{
+  padding:12px 16px;border-bottom:1px solid var(--bdr);
+  font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;
+}
+.room-row{
+  display:flex;align-items:center;padding:10px 16px;
+  border-bottom:1px solid var(--s3);gap:10px;
+}
+.room-row:last-child{border-bottom:none}
+.room-row-name{flex:1;font-family:var(--font-mono);font-size:13px;font-weight:500}
+.room-row-dim{font-family:var(--font-mono);font-size:11px;color:var(--muted)}
+.room-row-sqft{font-family:var(--font-mono);font-size:13px;color:var(--orange);font-weight:500}
+
+.line-item{
+  background:var(--s1);border:1px solid var(--bdr);
+  border-radius:10px;overflow:hidden;
+}
+.li-hdr{
+  display:flex;align-items:center;padding:14px 16px;
+  gap:12px;
+}
+.li-icon{font-size:22px}
+.li-name{
+  flex:1;font-family:var(--font-mono);font-size:13px;
+  font-weight:500;letter-spacing:.5px;
+}
+.li-range{font-family:var(--font-mono);font-size:14px;color:var(--orange);font-weight:500}
+.li-arrow{color:var(--muted);font-size:12px;margin-left:6px;transition:transform .2s}
+.li-arrow.open{transform:rotate(180deg)}
+.li-breakdown{
+  border-top:1px solid var(--bdr);background:var(--s2);
+  padding:14px 16px;display:flex;flex-direction:column;gap:8px;
+  display:none;
+}
+.li-breakdown.open{display:flex}
+.bd-row{display:flex;justify-content:space-between;align-items:center}
+.bd-lbl{font-size:13px;color:var(--muted)}
+.bd-val{font-family:var(--font-mono);font-size:12px}
+.bd-note{font-size:11px;color:var(--muted);line-height:1.5;margin-top:4px}
+
+.grand-total-card{
+  background:var(--orange-dim);border:1px solid rgba(255,98,0,.3);
+  border-radius:10px;padding:20px;text-align:center;display:flex;flex-direction:column;gap:6px;
+}
+.gt-lbl{font-family:var(--font-mono);font-size:10px;color:var(--orange);letter-spacing:2px;text-transform:uppercase}
+.gt-val{font-family:var(--font-display);font-size:48px;font-weight:900;letter-spacing:-1.5px;color:var(--orange)}
+.gt-sub{font-family:var(--font-mono);font-size:12px;color:var(--muted)}
+
+.disclaimer{
+  background:var(--s1);border:1px solid var(--bdr);
+  border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:6px;
+}
+.disclaimer-title{font-family:var(--font-mono);font-size:11px;color:var(--orange);font-weight:500}
+.disclaimer-body{font-size:12px;color:var(--muted);line-height:1.6}
+
+.action-row{display:flex;gap:10px}
+.action-row .btn{flex:1}
+
+/* ── TOAST ──────────────────────────────────────────── */
+#toast{
+  position:fixed;bottom:calc(var(--safe-bot) + 80px);left:50%;
+  transform:translateX(-50%) translateY(20px);
+  background:var(--s3);border:1px solid var(--bdr);
+  border-radius:8px;padding:10px 18px;
+  font-family:var(--font-mono);font-size:12px;color:var(--text);
+  opacity:0;transition:all .3s;z-index:1000;white-space:nowrap;
+  pointer-events:none;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── INSTALL BANNER ─────────────────────────────────── */
+#install-banner{
+  position:fixed;bottom:0;left:0;right:0;
+  background:var(--s2);border-top:1px solid var(--bdr);
+  padding:12px 20px calc(var(--safe-bot) + 12px);
+  display:flex;align-items:center;gap:12px;
+  z-index:200;transform:translateY(100%);transition:transform .4s;
+}
+#install-banner.show{transform:translateY(0)}
+.install-txt{flex:1;font-size:13px;line-height:1.4}
+.install-btn{
+  background:var(--orange);color:#fff;
+  border-radius:8px;padding:10px 16px;
+  font-family:var(--font-mono);font-size:12px;font-weight:500;
+  white-space:nowrap;
+}
+.install-dismiss{color:var(--muted);font-size:20px;padding:4px}
+</style>
+</head>
+<body>
+
+<div id="progress"><div id="progress-fill"></div></div>
+<div id="toast"></div>
+
+<!-- ═══════════════════════════════════════════
+     INSTALL BANNER
+═══════════════════════════════════════════ -->
+<div id="install-banner">
+  <div class="install-txt">
+    <strong>Add to Home Screen</strong><br>
+    <span style="color:var(--muted)">Works offline · Feels like a real app</span>
+  </div>
+  <button class="install-btn" id="install-btn">Install</button>
+  <button class="install-dismiss" id="install-dismiss">✕</button>
+</div>
+
+<div id="app">
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 1 — HOME
+═══════════════════════════════════════════ -->
+<div class="screen active" id="scr-home">
+  <div class="home-hero">
+    <div class="home-badge">
+      <div class="home-badge-dot"></div>
+      <span class="home-badge-txt">CSC FIELD TOOLS</span>
+    </div>
+    <div class="home-title">Room<br><span>Estimator</span></div>
+    <div class="home-sub">Scan a room with your camera or enter dimensions manually. Get a ballpark estimate in under a minute.</div>
+  </div>
+
+  <div class="scroll">
+    <div class="home-body">
+      <button class="btn btn-primary" onclick="goCamera()">
+        <span>📡</span> Scan Room with Camera
+      </button>
+      <button class="btn btn-secondary" onclick="goManual()">
+        <span>✏️</span> Enter Dimensions Manually
+      </button>
+
+      <div class="cover-card">
+        <div class="cover-label">Estimate covers</div>
+        <div id="cover-rows"></div>
+      </div>
+
+      <div style="text-align:center;padding:8px 0 4px">
+        <span style="font-family:var(--font-mono);font-size:10px;color:var(--muted)">CSC License #TGC133460 · Internal use only</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 2 — CAMERA MEASURE
+═══════════════════════════════════════════ -->
+<div class="screen" id="scr-camera">
+  <video id="cam-video" autoplay playsinline muted></video>
+  <canvas id="cam-canvas"></canvas>
+
+  <div class="cam-hud">
+    <div class="cam-topbar">
+      <button class="cam-close" onclick="stopCamera()">✕</button>
+      <div class="cam-pill">
+        <div class="cam-pill-dot"></div>
+        <span class="cam-pill-txt" id="cam-status">CORNERS 0/4</span>
+      </div>
+      <button class="cam-reset" onclick="resetCam()">RESET</button>
+    </div>
+
+    <div class="cam-banner">
+      <div class="cam-banner-txt" id="cam-instruction">
+        👇 Tap 4 floor corners of the room
+      </div>
+    </div>
+
+    <div class="cam-bottom">
+      <!-- Live dims (hidden until 2+ points) -->
+      <div class="dim-boxes" id="cam-dims" style="display:none">
+        <div class="dim-box">
+          <div class="dim-box-lbl">LENGTH</div>
+          <div class="dim-box-val" id="cam-length">—</div>
+        </div>
+        <div class="dim-box">
+          <div class="dim-box-lbl">WIDTH</div>
+          <div class="dim-box-val" id="cam-width">—</div>
+        </div>
+        <div class="dim-box">
+          <div class="dim-box-lbl">CEILING</div>
+          <div style="display:flex;align-items:center;gap:4px;justify-content:center;margin-top:2px">
+            <button style="color:var(--muted);font-size:20px;background:none;border:none;line-height:1" onclick="adjCeil(-1)">−</button>
+            <span class="dim-box-val" id="cam-ceil-val">9' 0"</span>
+            <button style="color:var(--muted);font-size:20px;background:none;border:none;line-height:1" onclick="adjCeil(1)">+</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Calibration panel (shown after 4 points) -->
+      <div class="cal-panel" id="cal-panel" style="display:none">
+        <div class="cal-label">Calibrate — enter one wall length</div>
+        <div class="cal-row">
+          <select class="cal-wall-select" id="cal-wall">
+            <option value="0">Wall P1 → P2</option>
+            <option value="1">Wall P2 → P3</option>
+            <option value="2">Wall P3 → P4</option>
+            <option value="3">Wall P4 → P1</option>
+          </select>
+          <input type="number" class="cal-input" id="cal-length" placeholder="14" min="1" max="200">
+          <span class="cal-unit">ft</span>
+        </div>
+        <button class="btn btn-primary" style="padding:12px" onclick="applyCalibration()">Apply Scale</button>
+      </div>
+
+      <!-- Action buttons -->
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-secondary" style="flex:1;padding:13px" id="cam-undo-btn" onclick="undoCamPoint()" style="display:none">↩ Undo</button>
+        <button class="btn btn-primary" style="flex:1;padding:13px" id="cam-use-btn" onclick="useCamDims()" style="display:none">Use Dimensions →</button>
+      </div>
+
+      <button class="btn-ghost" style="width:100%;text-align:center;font-family:var(--font-mono);font-size:12px;color:var(--muted)" onclick="goManual()">
+        Enter manually instead
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 3 — DIMENSIONS
+═══════════════════════════════════════════ -->
+<div class="screen" id="scr-dims">
+  <div class="hdr">
+    <div class="hdr-row">
+      <button class="back-btn" onclick="goHome()">←</button>
+      <div>
+        <div class="hdr-title">Dimensions</div>
+        <div class="hdr-sub">L × W × Ceiling in feet</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="totals-bar" id="totals-bar" style="display:none">
+    <div class="total-item">
+      <div class="total-val" id="tot-floor">0</div>
+      <div class="total-lbl">FLOOR SQFT</div>
+    </div>
+    <div class="total-div"></div>
+    <div class="total-item">
+      <div class="total-val" id="tot-wall">0</div>
+      <div class="total-lbl">WALL SQFT</div>
+    </div>
+    <div class="total-div"></div>
+    <div class="total-item">
+      <div class="total-val" id="tot-rooms">1</div>
+      <div class="total-lbl">ROOMS</div>
+    </div>
+  </div>
+
+  <div class="scroll">
+    <div class="rooms-list" id="rooms-list"></div>
+  </div>
+
+  <div class="footer">
+    <button class="btn btn-secondary" onclick="addRoom()">+ Add Another Room</button>
+    <button class="btn btn-primary" id="dims-continue-btn" onclick="goDims2Work()" disabled>
+      Select Work Types →
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 4 — WORK TYPES
+═══════════════════════════════════════════ -->
+<div class="screen" id="scr-work">
+  <div class="hdr">
+    <div class="hdr-row">
+      <button class="back-btn" onclick="showScreen('scr-dims',2)">←</button>
+      <div>
+        <div class="hdr-title">Scope of Work</div>
+        <div class="hdr-sub" id="work-sub">Select all that apply</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll">
+    <div class="work-list" id="work-list"></div>
+  </div>
+
+  <div class="footer">
+    <button class="btn btn-primary" id="work-continue-btn" onclick="goWork2Est()" disabled>
+      Generate Estimate →
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 5 — ESTIMATE
+═══════════════════════════════════════════ -->
+<div class="screen" id="scr-estimate">
+  <div class="est-hero">
+    <button class="est-back" onclick="showScreen('scr-work',3)">← Back</button>
+    <div class="est-eyebrow">Estimate Range</div>
+    <div class="est-total" id="est-total">$0 – $0</div>
+    <div class="est-meta" id="est-meta"></div>
+  </div>
+
+  <div class="scroll">
+    <div class="est-content" id="est-content"></div>
+  </div>
+
+  <div class="footer">
+    <div class="action-row">
+      <button class="btn btn-primary" onclick="shareEst()">↑ Share</button>
+      <button class="btn btn-secondary" onclick="copyEst()">📋 Copy</button>
+    </div>
+    <button class="btn btn-ghost" onclick="goHome()" style="font-family:var(--font-mono);font-size:13px">
+      Start New Estimate
+    </button>
+  </div>
+</div>
+
+</div><!-- #app -->
+
+<script>
+// ═══════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════
+const WORK_TYPES = [
+  { id:'drywall',  name:'Drywall',          icon:'🧱', basis:'wall',
+    lowRate:2.50,  highRate:5.00, matPct:.40, labPct:.60,
+    note:'Hang, tape, mud, sand. Prime/paint billed separately.' },
+  { id:'flooring', name:'Flooring',         icon:'🪵', basis:'floor',
+    lowRate:4.00,  highRate:10.00, matPct:.55, labPct:.45,
+    note:'LVP mid-grade. Tile or hardwood runs toward high end.' },
+  { id:'kitchen',  name:'Kitchen Remodel',  icon:'🍳', basis:'unit',
+    lowFlat:15000, highFlat:45000,
+    bd:[{l:'Cabinets & Counters',p:.45},{l:'Labor & Demo',p:.30},{l:'Appliances',p:.15},{l:'Plumbing & Electric',p:.10}],
+    note:'Mid-grade finishes. Custom cabinetry not included.' },
+  { id:'bathroom', name:'Bathroom Remodel', icon:'🚿', basis:'unit',
+    lowFlat:8000,  highFlat:25000,
+    bd:[{l:'Tile & Fixtures',p:.45},{l:'Labor & Demo',p:.35},{l:'Plumbing',p:.15},{l:'Vanity & Mirror',p:.05}],
+    note:'Full gut retile. No structural changes included.' },
+  { id:'full',     name:'Full Renovation',  icon:'🏗️', basis:'floor',
+    lowRate:50, highRate:120, matPct:.48, labPct:.52,
+    note:'Full gut rehab — cosmetic + mechanical updates.' },
+];
+
+const ROOM_TYPES = ['Living Room','Bedroom','Kitchen','Bathroom','Basement','Dining Room','Hallway','Bonus Room','Office'];
+
+// ── App state ──
+let rooms      = [];
+let selWork    = [];
+let ceilFt     = 9.0;
+
+// ── Camera state ──
+let camStream  = null;
+let camPoints  = [];   // [{x,y}] screen coords
+let pxPerFt    = null; // calibration
+let camCeil    = 9.0;
+
+// ── PWA ──
+let deferredInstall = null;
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+(function init() {
+  renderCoverRows();
+  renderRooms();
+  renderWorkTypes();
+
+  // PWA install prompt
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredInstall = e;
+    setTimeout(() => document.getElementById('install-banner').classList.add('show'), 3000);
+  });
+
+  document.getElementById('install-btn').onclick = async () => {
+    if (!deferredInstall) return;
+    deferredInstall.prompt();
+    const { outcome } = await deferredInstall.userChoice;
+    deferredInstall = null;
+    document.getElementById('install-banner').classList.remove('show');
+  };
+  document.getElementById('install-dismiss').onclick = () => {
+    document.getElementById('install-banner').classList.remove('show');
+  };
+
+  // Register service worker for offline
+  if ('serviceWorker' in navigator) {
+    const sw = `
+      const CACHE = 'csc-v1';
+      self.addEventListener('install', e => {
+        e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/'])));
+      });
+      self.addEventListener('fetch', e => {
+        e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+      });
+    `;
+    const blob = new Blob([sw], { type: 'application/javascript' });
+    navigator.serviceWorker.register(URL.createObjectURL(blob));
+  }
+})();
+
+// ═══════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════
+const PROGRESS = { 'scr-home':0, 'scr-camera':20, 'scr-dims':45, 'scr-work':70, 'scr-estimate':100 };
+
+function showScreen(id, step) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById('progress-fill').style.width = (PROGRESS[id] || 0) + '%';
+  window.scrollTo(0,0);
+}
+
+function goHome() {
+  if (camStream) stopCamera();
+  rooms   = [freshRoom()];
+  selWork = [];
+  renderRooms();
+  renderWorkTypes();
+  showScreen('scr-home', 0);
+}
+
+function goCamera() {
+  startCamera();
+  showScreen('scr-camera', 1);
+}
+
+function goManual() {
+  if (camStream) stopCamera();
+  if (!rooms.length) rooms = [freshRoom()];
+  renderRooms();
+  showScreen('scr-dims', 2);
+}
+
+function goDims2Work() {
+  const totalFloor = rooms.reduce((s,r) => s + fl(r),0);
+  document.getElementById('work-sub').textContent =
+    `${rooms.length} room${rooms.length!==1?'s':''} · ${Math.round(totalFloor)} sqft`;
+  renderWorkTypes();
+  showScreen('scr-work', 3);
+}
+
+function goWork2Est() {
+  buildEstimate();
+  showScreen('scr-estimate', 4);
+}
+
+// ═══════════════════════════════════════════════════════
+// ROOMS
+// ═══════════════════════════════════════════════════════
+function freshRoom(pre) {
+  return pre || { name:'Living Room', length:'', width:'', height:'9' };
+}
+
+function fl(r)  { return (parseFloat(r.length)||0)*(parseFloat(r.width)||0); }
+function wall(r){ return 2*((parseFloat(r.length)||0)+(parseFloat(r.width)||0))*(parseFloat(r.height)||0); }
+
+function addRoom() {
+  rooms.push(freshRoom());
+  renderRooms();
+}
+
+function removeRoom(i) {
+  if (rooms.length <= 1) return;
+  rooms.splice(i,1);
+  renderRooms();
+}
+
+function updateRoom(i, field, val) {
+  rooms[i][field] = val;
+  updateTotals();
+  updateContinueBtn();
+}
+
+function setRoomType(i, name) {
+  rooms[i].name = name;
+  renderRooms();
+}
+
+function renderRooms() {
+  const list = document.getElementById('rooms-list');
+  list.innerHTML = '';
+
+  if (rooms.length === 0) rooms = [freshRoom()];
+
+  // AR badge if prefilled
+  const anyPrefilled = rooms.some(r => r._prefilled);
+  if (anyPrefilled) {
+    list.innerHTML += `<div class="ar-badge"><div class="ar-badge-txt">📡 Pre-filled from camera scan — adjust if needed</div></div>`;
+  }
+
+  rooms.forEach((room, i) => {
+    const floorSqft = fl(room);
+    const wallSqft  = wall(room);
+
+    const calcHtml = floorSqft > 0
+      ? `<div class="room-calc">
+           <span>${Math.round(floorSqft)} floor sqft</span>
+           <span class="room-calc-sep">·</span>
+           <span>${Math.round(wallSqft)} wall sqft</span>
+         </div>` : '';
+
+    const chips = ROOM_TYPES.map(t =>
+      `<div class="chip${room.name===t?' active':''}" onclick="setRoomType(${i},'${t}')">${t}</div>`
+    ).join('');
+
+    const removeBtn = rooms.length > 1
+      ? `<button class="remove-btn" onclick="removeRoom(${i})">✕</button>` : '';
+
+    list.innerHTML += `
+      <div class="room-card">
+        <div class="room-card-hdr">
+          <div class="type-scroll"><div class="type-chips">${chips}</div></div>
+          ${removeBtn}
+        </div>
+        <div class="dim-inputs">
+          ${['length','width','height'].map(f => `
+            <div class="dim-group">
+              <div class="dim-lbl">${f==='height'?'CEILING':f.toUpperCase()}</div>
+              <input class="dim-input" type="number" inputmode="decimal"
+                value="${room[f]}" placeholder="0" min="0" step="0.5"
+                oninput="updateRoom(${i},'${f}',this.value)">
+              <div class="dim-unit">ft</div>
+            </div>
+          `).join('')}
+        </div>
+        ${calcHtml}
+      </div>`;
+  });
+
+  list.innerHTML += `<button class="add-room" onclick="addRoom()">
+    <span style="font-size:20px;color:var(--muted)">+</span>
+    <span class="add-room-txt">Add Another Room</span>
+  </button>`;
+
+  updateTotals();
+  updateContinueBtn();
+}
+
+function updateTotals() {
+  const totalFloor = rooms.reduce((s,r) => s + fl(r),0);
+  const totalWall  = rooms.reduce((s,r) => s + wall(r),0);
+  const bar = document.getElementById('totals-bar');
+
+  if (totalFloor > 0) {
+    bar.style.display = 'flex';
+    document.getElementById('tot-floor').textContent = Math.round(totalFloor);
+    document.getElementById('tot-wall').textContent  = Math.round(totalWall);
+    document.getElementById('tot-rooms').textContent = rooms.length;
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+function updateContinueBtn() {
+  const valid = rooms.every(r =>
+    parseFloat(r.length)>0 && parseFloat(r.width)>0 && parseFloat(r.height)>0
+  );
+  document.getElementById('dims-continue-btn').disabled = !valid;
+}
+
+// ═══════════════════════════════════════════════════════
+// WORK TYPES
+// ═══════════════════════════════════════════════════════
+function renderWorkTypes() {
+  const list = document.getElementById('work-list');
+  list.innerHTML = WORK_TYPES.map(wt => `
+    <div class="work-card${selWork.includes(wt.id)?' on':''}" id="wc-${wt.id}" onclick="toggleWork('${wt.id}')">
+      <div class="work-icon-box">${wt.icon}</div>
+      <div class="work-info">
+        <div class="work-name">${wt.name.toUpperCase()}</div>
+        <div class="work-note">${wt.note}</div>
+      </div>
+      <div class="work-check">
+        <div class="work-check-inner">✓</div>
+      </div>
+    </div>
+  `).join('');
+  updateWorkBtn();
+}
+
+function toggleWork(id) {
+  if (selWork.includes(id)) selWork = selWork.filter(x=>x!==id);
+  else selWork.push(id);
+  renderWorkTypes();
+}
+
+function updateWorkBtn() {
+  document.getElementById('work-continue-btn').disabled = selWork.length === 0;
+}
+
+// ═══════════════════════════════════════════════════════
+// ESTIMATE
+// ═══════════════════════════════════════════════════════
+function fmtDollar(n)   { return '$'+Math.round(n).toLocaleString(); }
+function fmtK(n)        { return n>=1000?'$'+(n/1000).toFixed(0)+'K':'$'+Math.round(n); }
+function fmtRange(l,h)  { return `${fmtK(l)} – ${fmtK(h)}`; }
+
+function calcLineItem(wt) {
+  const totalFloor = rooms.reduce((s,r)=>s+fl(r),0);
+  const totalWall  = rooms.reduce((s,r)=>s+wall(r),0);
+  const kitchens   = Math.max(1,rooms.filter(r=>r.name==='Kitchen').length);
+  const baths      = Math.max(1,rooms.filter(r=>r.name==='Bathroom').length);
+
+  let low=0,high=0,sqft=0,bd=[];
+
+  if (wt.basis==='wall') {
+    sqft=Math.round(totalWall); low=sqft*wt.lowRate; high=sqft*wt.highRate;
+    bd=[{l:'Wall Area',v:`${sqft} sq ft`},{l:'Rate',v:`$${wt.lowRate}–$${wt.highRate}/sqft`},
+        {l:'Material',v:fmtDollar(low*wt.matPct)},{l:'Labor',v:fmtDollar(low*wt.labPct)}];
+  } else if (wt.basis==='floor') {
+    sqft=Math.round(totalFloor); low=sqft*wt.lowRate; high=sqft*wt.highRate;
+    bd=[{l:'Floor Area',v:`${sqft} sq ft`},{l:'Rate',v:`$${wt.lowRate}–$${wt.highRate}/sqft`},
+        {l:'Material',v:fmtDollar(low*wt.matPct)},{l:'Labor',v:fmtDollar(low*wt.labPct)}];
+  } else if (wt.id==='kitchen') {
+    low=wt.lowFlat*kitchens; high=wt.highFlat*kitchens;
+    bd=[{l:'Kitchens',v:kitchens},...wt.bd.map(b=>({l:b.l,v:fmtDollar(wt.lowFlat*b.p)}))];
+  } else if (wt.id==='bathroom') {
+    low=wt.lowFlat*baths; high=wt.highFlat*baths;
+    bd=[{l:'Bathrooms',v:baths},...wt.bd.map(b=>({l:b.l,v:fmtDollar(wt.lowFlat*b.p)}))];
+  }
+  return { ...wt, low, high, sqft, bd };
+}
+
+function buildEstimate() {
+  const items = selWork.map(id => calcLineItem(WORK_TYPES.find(w=>w.id===id)));
+  const grandLow  = items.reduce((s,i)=>s+i.low,0);
+  const grandHigh = items.reduce((s,i)=>s+i.high,0);
+  const totalFloor= rooms.reduce((s,r)=>s+fl(r),0);
+  const totalWall = rooms.reduce((s,r)=>s+wall(r),0);
+
+  document.getElementById('est-total').textContent = fmtRange(grandLow,grandHigh);
+  document.getElementById('est-meta').textContent  =
+    `${rooms.length} room${rooms.length!==1?'s':''} · ${Math.round(totalFloor)} sqft floor · ${Math.round(totalWall)} sqft walls`;
+
+  const c = document.getElementById('est-content');
+  c.innerHTML = `
+    <div class="meta-grid">
+      ${[['Floor Sqft',Math.round(totalFloor)],['Wall Sqft',Math.round(totalWall)],['Rooms',rooms.length],['Scope',items.length+' items']]
+        .map(([l,v])=>`<div class="meta-card"><div class="meta-val">${v}</div><div class="meta-lbl">${l.toUpperCase()}</div></div>`).join('')}
+    </div>
+
+    <div class="rooms-summary">
+      <div class="rooms-summary-hdr">ROOMS</div>
+      ${rooms.map(r=>`
+        <div class="room-row">
+          <div class="room-row-name">${r.name}</div>
+          <div class="room-row-dim">${r.length}'×${r.width}'×${r.height}'</div>
+          <div class="room-row-sqft">${Math.round(fl(r))} sqft</div>
+        </div>`).join('')}
+    </div>
+
+    ${items.map((item,idx) => `
+      <div class="line-item">
+        <div class="li-hdr" onclick="toggleLi(${idx})">
+          <div class="li-icon">${item.icon}</div>
+          <div class="li-name">${item.name.toUpperCase()}</div>
+          <div class="li-range">${fmtRange(item.low,item.high)}</div>
+          <div class="li-arrow" id="li-arrow-${idx}">▼</div>
+        </div>
+        <div class="li-breakdown" id="li-bd-${idx}">
+          ${item.bd.map(b=>`<div class="bd-row"><span class="bd-lbl">${b.l}</span><span class="bd-val">${b.v}</span></div>`).join('')}
+          <div class="bd-note">ℹ️ ${item.note}</div>
+        </div>
+      </div>`).join('')}
+
+    <div class="grand-total-card">
+      <div class="gt-lbl">Total Range</div>
+      <div class="gt-val">${fmtRange(grandLow,grandHigh)}</div>
+      <div class="gt-sub">${fmtDollar(grandLow)} low · ${fmtDollar(grandHigh)} high</div>
+    </div>
+
+    <div class="disclaimer">
+      <div class="disclaimer-title">⚠️ Internal Use Only</div>
+      <div class="disclaimer-body">
+        Ballpark estimate based on CSC typical project data.
+        Final pricing requires a site visit, material selection, and formal proposal via Nusii.
+      </div>
+    </div>
+    <div style="height:10px"></div>
+  `;
+
+  // Store for sharing
+  window._estItems = items;
+  window._grandLow = grandLow;
+  window._grandHigh = grandHigh;
+}
+
+function toggleLi(idx) {
+  const bd    = document.getElementById(`li-bd-${idx}`);
+  const arrow = document.getElementById(`li-arrow-${idx}`);
+  const open  = bd.classList.toggle('open');
+  arrow.classList.toggle('open', open);
+}
+
+function buildShareText() {
+  const items = window._estItems || [];
+  return [
+    '━━━━━━━━━━━━━━━━━━━',
+    'CSC FIELD ESTIMATE',
+    '━━━━━━━━━━━━━━━━━━━',
+    `${rooms.length} room(s)`,
+    '',
+    ...items.map(i=>`${i.icon} ${i.name}\n   ${fmtDollar(i.low)} – ${fmtDollar(i.high)}`),
+    '',
+    `TOTAL: ${fmtRange(window._grandLow||0,window._grandHigh||0)}`,
+    '',
+    '⚠️ Internal ballpark. Final price via site visit + Nusii.',
+    '━━━━━━━━━━━━━━━━━━━',
+    'Creative Smart Contractors',
+    'creativesmartcontractors.com',
+  ].join('\n');
+}
+
+async function shareEst() {
+  const text = buildShareText();
+  if (navigator.share) {
+    try { await navigator.share({ title:'CSC Estimate', text }); return; } catch {}
+  }
+  copyToClipboard(text);
+}
+
+function copyEst() {
+  copyToClipboard(buildShareText());
+}
+
+function copyToClipboard(text) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(()=>toast('✓ Copied to clipboard'));
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText='position:fixed;opacity:0';
+    document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+    toast('✓ Copied to clipboard');
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// CAMERA MEASUREMENT
+// ═══════════════════════════════════════════════════════
+const CAM_ORANGE  = '#FF6200';
+const CAM_LINE    = 'rgba(255,98,0,0.8)';
+const CAM_LABEL_BG= 'rgba(0,0,0,0.75)';
+
+async function startCamera() {
+  const video  = document.getElementById('cam-video');
+  const canvas = document.getElementById('cam-canvas');
+  camPoints = [];
+  pxPerFt   = null;
+  camCeil   = 9.0;
+
+  try {
+    camStream = await navigator.mediaDevices.getUserMedia({
+      video:{ facingMode:'environment', width:{ideal:1920}, height:{ideal:1080} }
+    });
+    video.srcObject = camStream;
+    await video.play();
+
+    // Size canvas to match video display size
+    const resize = () => {
+      canvas.width  = canvas.offsetWidth  * window.devicePixelRatio;
+      canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+      drawCamOverlay();
+    };
+    resize();
+    window.addEventListener('resize', resize);
+    canvas._resizeListener = resize;
+
+    // Tap handler
+    canvas.addEventListener('touchend', onCamTap, { passive:false });
+    canvas.addEventListener('click',    onCamTap);
+
+    updateCamUI();
+  } catch(e) {
+    alert('Camera access denied or not available.\nUse "Enter Manually" instead.');
+    stopCamera();
+    goManual();
+  }
+}
+
+function stopCamera() {
+  if (camStream) {
+    camStream.getTracks().forEach(t => t.stop());
+    camStream = null;
+  }
+  const canvas = document.getElementById('cam-canvas');
+  canvas.removeEventListener('touchend', onCamTap);
+  canvas.removeEventListener('click',    onCamTap);
+  if (canvas._resizeListener) {
+    window.removeEventListener('resize', canvas._resizeListener);
+    delete canvas._resizeListener;
+  }
+  showScreen('scr-home', 0);
+}
+
+function onCamTap(e) {
+  e.preventDefault();
+  if (camPoints.length >= 4) return;
+
+  const canvas = document.getElementById('cam-canvas');
+  const rect   = canvas.getBoundingClientRect();
+  const dpr    = window.devicePixelRatio || 1;
+
+  let clientX, clientY;
+  if (e.touches) {
+    clientX = e.changedTouches[0].clientX;
+    clientY = e.changedTouches[0].clientY;
+  } else {
+    clientX = e.clientX;
+    clientY = e.clientY;
+  }
+
+  // Map to canvas pixel coords
+  const x = (clientX - rect.left) * dpr;
+  const y = (clientY - rect.top)  * dpr;
+
+  camPoints.push({ x, y });
+
+  if (navigator.vibrate) navigator.vibrate(25);
+  drawCamOverlay();
+  updateCamUI();
+}
+
+function undoCamPoint() {
+  if (camPoints.length === 0) return;
+  camPoints.pop();
+  pxPerFt = null;
+  drawCamOverlay();
+  updateCamUI();
+}
+
+function resetCam() {
+  camPoints = [];
+  pxPerFt   = null;
+  drawCamOverlay();
+  updateCamUI();
+}
+
+function adjCeil(dir) {
+  camCeil = Math.min(20, Math.max(6.5, parseFloat((camCeil + dir * 0.5).toFixed(1))));
+  document.getElementById('cam-ceil-val').textContent = ftIn(camCeil);
+  updateCamDimBoxes();
+}
+
+function drawCamOverlay() {
+  const canvas = document.getElementById('cam-canvas');
+  const ctx    = canvas.getContext('2d');
+  const dpr    = window.devicePixelRatio || 1;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (camPoints.length === 0) return;
+
+  const pts = camPoints;
+
+  // Draw edges
+  ctx.strokeStyle = CAM_LINE;
+  ctx.lineWidth   = 2 * dpr;
+  ctx.setLineDash([8*dpr, 4*dpr]);
+
+  for (let i = 1; i < pts.length; i++) {
+    ctx.beginPath();
+    ctx.moveTo(pts[i-1].x, pts[i-1].y);
+    ctx.lineTo(pts[i].x, pts[i].y);
+    ctx.stroke();
+
+    drawCamDistLabel(ctx, pts[i-1], pts[i], i-1, dpr);
+  }
+
+  // Close loop when 4 points
+  if (pts.length === 4) {
+    ctx.beginPath();
+    ctx.moveTo(pts[3].x, pts[3].y);
+    ctx.lineTo(pts[0].x, pts[0].y);
+    ctx.stroke();
+    drawCamDistLabel(ctx, pts[3], pts[0], 3, dpr);
+  }
+  ctx.setLineDash([]);
+
+  // Draw anchor points
+  pts.forEach((pt, i) => {
+    // Glow
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, 18*dpr, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(255,98,0,0.2)';
+    ctx.fill();
+    // Solid dot
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, 9*dpr, 0, Math.PI*2);
+    ctx.fillStyle = CAM_ORANGE;
+    ctx.fill();
+    // Label
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold ${12*dpr}px monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`P${i+1}`, pt.x, pt.y);
+  });
+}
+
+function drawCamDistLabel(ctx, a, b, edgeIdx, dpr) {
+  const dist = pxDist(a, b);
+  let label;
+
+  if (pxPerFt && dist > 0) {
+    label = ftIn(dist / pxPerFt);
+  } else {
+    label = `Wall ${edgeIdx+1}`;
+  }
+
+  const mx = (a.x + b.x) / 2;
+  const my = (a.y + b.y) / 2;
+
+  ctx.font = `bold ${11*dpr}px monospace`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const w = ctx.measureText(label).width + 16*dpr;
+  const h = 20*dpr;
+
+  ctx.fillStyle = CAM_LABEL_BG;
+  roundRect(ctx, mx - w/2, my - h/2, w, h, 4*dpr);
+  ctx.fill();
+
+  ctx.strokeStyle = 'rgba(255,98,0,0.5)';
+  ctx.lineWidth = 1*dpr;
+  ctx.setLineDash([]);
+  roundRect(ctx, mx - w/2, my - h/2, w, h, 4*dpr);
+  ctx.stroke();
+
+  ctx.fillStyle = '#FF6200';
+  ctx.fillText(label, mx, my);
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y);
+  ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h-r);
+  ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  ctx.lineTo(x+r, y+h);
+  ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+  ctx.lineTo(x, y+r);
+  ctx.quadraticCurveTo(x, y, x+r, y);
+  ctx.closePath();
+}
+
+function pxDist(a, b) {
+  const dx = b.x-a.x, dy = b.y-a.y;
+  return Math.sqrt(dx*dx + dy*dy);
+}
+
+function ptDists() {
+  const pts = camPoints;
+  if (pts.length < 2) return [];
+  const d = [];
+  for (let i=1; i<pts.length; i++) d.push(pxDist(pts[i-1],pts[i]));
+  if (pts.length===4) d.push(pxDist(pts[3],pts[0]));
+  return d;
+}
+
+function applyCalibration() {
+  const wallIdx  = parseInt(document.getElementById('cal-wall').value);
+  const lengthFt = parseFloat(document.getElementById('cal-length').value);
+  if (!lengthFt || lengthFt <= 0) { toast('Enter a valid wall length'); return; }
+
+  const dists = ptDists();
+  if (wallIdx >= dists.length) { toast('Place all 4 corners first'); return; }
+
+  const px = dists[wallIdx];
+  if (px <= 0) { toast('Invalid wall — retap corners'); return; }
+
+  pxPerFt = px / lengthFt;
+  drawCamOverlay();
+  updateCamDimBoxes();
+  document.getElementById('cam-dims').style.display = 'flex';
+  document.getElementById('cam-use-btn').style.display = '';
+  toast('✓ Scale applied');
+}
+
+function updateCamDimBoxes() {
+  if (!pxPerFt || camPoints.length < 2) return;
+  const { length, width } = computeCamDims();
+  document.getElementById('cam-length').textContent = ftIn(length);
+  document.getElementById('cam-width').textContent  = ftIn(width);
+}
+
+function computeCamDims() {
+  const dists = ptDists();
+  if (!dists.length || !pxPerFt) return { length:0, width:0 };
+  const ftVals = dists.map(d => d/pxPerFt);
+  ftVals.sort((a,b)=>b-a);
+  return { length: roundHalf(ftVals[0]), width: roundHalf(ftVals.length>1?ftVals[1]:ftVals[0]) };
+}
+
+function useCamDims() {
+  if (!pxPerFt) { toast('Calibrate first — enter a wall length'); return; }
+  const { length, width } = computeCamDims();
+  rooms = [{ name:'Living Room', length:length.toFixed(1), width:width.toFixed(1), height:camCeil.toFixed(1), _prefilled:true }];
+  stopCamClean();
+  renderRooms();
+  showScreen('scr-dims', 2);
+}
+
+function stopCamClean() {
+  if (camStream) { camStream.getTracks().forEach(t=>t.stop()); camStream=null; }
+}
+
+function updateCamUI() {
+  const n = camPoints.length;
+  document.getElementById('cam-status').textContent = `CORNERS ${n}/4`;
+
+  const instr = [
+    '👇 Tap the 4 floor corners of the room',
+    'Tap corner 2, then 3, then 4',
+    'Tap corner 3, then 4',
+    'Tap the last corner',
+    '✓ All corners placed — calibrate below',
+  ];
+  document.getElementById('cam-instruction').textContent = instr[Math.min(n,4)];
+
+  document.getElementById('cam-undo-btn').style.display = n > 0 ? '' : 'none';
+  document.getElementById('cal-panel').style.display    = n === 4 ? '' : 'none';
+
+  if (n < 2) {
+    document.getElementById('cam-dims').style.display  = 'none';
+    document.getElementById('cam-use-btn').style.display = 'none';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// COVER ROWS (HOME SCREEN)
+// ═══════════════════════════════════════════════════════
+function renderCoverRows() {
+  const ranges = {
+    drywall:'$2.50–$5/sqft', flooring:'$4–$10/sqft',
+    kitchen:'$15K–$45K', bathroom:'$8K–$25K', full:'$50–$120/sqft'
+  };
+  document.getElementById('cover-rows').innerHTML = WORK_TYPES.map(wt =>
+    `<div class="cover-row">
+      <span class="cover-icon">${wt.icon}</span>
+      <span class="cover-name">${wt.name.toUpperCase()}</span>
+      <span class="cover-range">${ranges[wt.id]}</span>
+    </div>`
+  ).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════════════════════
+function ftIn(ft) {
+  if (!ft||isNaN(ft)||ft<=0) return '—';
+  const total = Math.round(ft*12);
+  return `${Math.floor(total/12)}' ${total%12}"`;
+}
+
+function roundHalf(n) { return Math.round(n*2)/2; }
+
+let toastTimer;
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+</script>
+</body>
+</html>
