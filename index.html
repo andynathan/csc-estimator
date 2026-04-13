@@ -2,24 +2,24 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#080A0E">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>CSC Room Estimator</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=DM+Mono:wght@400;500&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overflow:hidden;background:#080A0E}
 button{cursor:pointer;border:none;background:none;font-family:inherit}
-input,select{font-family:inherit;border:none;outline:none}
+input,select,textarea{font-family:inherit;border:none;outline:none}
 input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
 :root{
   --bg:#080A0E;--s1:#0F1218;--s2:#161B25;--s3:#1E2430;
   --bdr:#252B38;--muted:#4A5568;--text:#E2E8F4;
-  --orange:#FF6200;--od:rgba(255,98,0,0.12);--og:rgba(255,98,0,0.25);
-  --green:#00C87A;--red:#FF4455;
+  --orange:#FF6200;--od:rgba(255,98,0,0.13);--og:rgba(255,98,0,0.28);
+  --green:#00C87A;--gd:rgba(0,200,122,0.13);--red:#FF4455;
+  --blue:#3B82F6;
   --fd:'Barlow Condensed',sans-serif;--fm:'DM Mono',monospace;--fb:'Barlow',sans-serif;
   --st:env(safe-area-inset-top,20px);--sb:env(safe-area-inset-bottom,20px);
 }
@@ -31,36 +31,62 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
 @keyframes fu{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .scroll::-webkit-scrollbar{display:none}
-.hdr{padding:calc(var(--st) + 6px) 20px 16px;border-bottom:1px solid var(--bdr);background:var(--s1);flex-shrink:0}
+/* Header */
+.hdr{padding:calc(var(--st)+6px) 20px 16px;border-bottom:1px solid var(--bdr);background:var(--s1);flex-shrink:0}
 .hdr-row{display:flex;align-items:center;gap:14px}
 .back{width:36px;height:36px;border-radius:50%;background:var(--s3);border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
 .hdr-ttl{font-family:var(--fd);font-size:28px;font-weight:900;letter-spacing:-.5px}
 .hdr-sub{color:var(--muted);font-size:12px;margin-top:2px;font-family:var(--fm)}
-.btn{width:100%;padding:16px;border-radius:10px;font-family:var(--fm);font-size:14px;font-weight:500;letter-spacing:.5px;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:10px}
+/* Buttons */
+.btn{width:100%;padding:15px;border-radius:10px;font-family:var(--fm);font-size:13px;font-weight:500;letter-spacing:.5px;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:10px}
 .bp{background:var(--orange);color:#fff}.bp:active{background:#e05500;transform:scale(.98)}
 .bs{background:transparent;border:1px solid var(--bdr);color:var(--text)}.bs:active{border-color:var(--orange);color:var(--orange)}
+.bg{background:var(--gd);border:1px solid var(--green);color:var(--green)}
+.bb{background:rgba(59,130,246,.13);border:1px solid var(--blue);color:var(--blue)}
 .btn:disabled{opacity:.35;pointer-events:none}
-.ftr{padding:14px 20px calc(var(--sb) + 10px);border-top:1px solid var(--bdr);background:var(--s1);flex-shrink:0;display:flex;flex-direction:column;gap:10px}
-#toast{position:fixed;bottom:calc(var(--sb)+80px);left:50%;transform:translateX(-50%) translateY(20px);background:var(--s3);border:1px solid var(--bdr);border-radius:8px;padding:10px 18px;font-family:var(--fm);font-size:12px;color:var(--text);opacity:0;transition:all .3s;z-index:999;white-space:nowrap;pointer-events:none}
+.ftr{padding:14px 20px calc(var(--sb)+10px);border-top:1px solid var(--bdr);background:var(--s1);flex-shrink:0;display:flex;flex-direction:column;gap:10px}
+/* Toast */
+#toast{position:fixed;bottom:calc(var(--sb)+80px);left:50%;transform:translateX(-50%) translateY(20px);background:var(--s3);border:1px solid var(--bdr);border-radius:8px;padding:10px 18px;font-family:var(--fm);font-size:12px;color:var(--text);opacity:0;transition:all .3s;z-index:999;white-space:nowrap;pointer-events:none;max-width:90%;text-align:center}
 #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 
-/* HOME */
-.hero{padding:calc(var(--st)+10px) 24px 28px;background:linear-gradient(180deg,var(--s1) 0%,var(--bg) 100%);border-bottom:1px solid var(--bdr);position:relative;overflow:hidden;flex-shrink:0}
-.hero::after{content:'';position:absolute;top:-80px;right:-60px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,var(--og) 0%,transparent 70%);pointer-events:none}
-.badge{display:inline-flex;align-items:center;gap:7px;background:var(--od);border:1px solid rgba(255,98,0,.3);border-radius:4px;padding:5px 10px;margin-bottom:18px}
+/* ══ HOME ══ */
+.hero{padding:calc(var(--st)+10px) 24px 24px;background:linear-gradient(180deg,var(--s1) 0%,var(--bg) 100%);border-bottom:1px solid var(--bdr);position:relative;overflow:hidden;flex-shrink:0}
+.hero::after{content:'';position:absolute;top:-80px;right:-60px;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(255,98,0,.2) 0%,transparent 70%);pointer-events:none}
+.badge{display:inline-flex;align-items:center;gap:7px;background:var(--od);border:1px solid rgba(255,98,0,.3);border-radius:4px;padding:5px 10px;margin-bottom:16px}
 .bdot{width:6px;height:6px;border-radius:50%;background:var(--orange)}
 .btxt{font-family:var(--fm);font-size:10px;color:var(--orange);letter-spacing:2px}
-.htitle{font-family:var(--fd);font-size:52px;font-weight:900;line-height:.95;letter-spacing:-2px;margin-bottom:10px}
+.htitle{font-family:var(--fd);font-size:48px;font-weight:900;line-height:.95;letter-spacing:-2px;margin-bottom:8px}
 .htitle span{color:var(--orange)}
-.hsub{color:var(--muted);font-size:14px;line-height:1.5}
-.hbody{padding:22px 20px;display:flex;flex-direction:column;gap:12px}
-.ccard{background:var(--s1);border:1px solid var(--bdr);border-radius:12px;padding:16px}
+.hsub{color:var(--muted);font-size:13px;line-height:1.5}
+.hbody{padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.ccard{background:var(--s1);border:1px solid var(--bdr);border-radius:12px;padding:14px}
 .clbl{font-family:var(--fm);font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
-.crow{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--s3)}
+.crow{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--s3)}
 .crow:last-child{border-bottom:none}
+/* Saved estimates */
+.saves-card{background:var(--s1);border:1px solid var(--bdr);border-radius:12px;padding:14px}
+.save-row{display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--s3);gap:10px}
+.save-row:last-child{border-bottom:none}
+.save-info{flex:1}
+.save-name{font-family:var(--fm);font-size:13px;font-weight:500}
+.save-meta{font-size:11px;color:var(--muted);margin-top:2px}
+.save-total{font-family:var(--fm);font-size:13px;color:var(--orange)}
+.save-del{color:var(--red);font-size:16px;padding:4px 8px}
 
-/* API KEY */
-.kwrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;gap:20px}
+/* ══ SETTINGS ══ */
+.settings-list{padding:18px;display:flex;flex-direction:column;gap:16px}
+.setting-group{background:var(--s1);border:1px solid var(--bdr);border-radius:12px;overflow:hidden}
+.sg-title{padding:12px 16px;border-bottom:1px solid var(--bdr);font-family:var(--fm);font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
+.sg-body{padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.sg-row{display:flex;flex-direction:column;gap:6px}
+.sg-lbl{font-family:var(--fm);font-size:11px;color:var(--muted);letter-spacing:1px}
+.sg-input{background:var(--s2);border:1px solid var(--bdr);border-radius:8px;padding:12px 14px;color:var(--text);font-family:var(--fm);font-size:13px;width:100%;transition:border-color .15s}
+.sg-input:focus{border-color:var(--orange)}
+.sg-note{font-size:11px;color:var(--muted);line-height:1.6}
+.sg-link{color:var(--orange);text-decoration:none}
+
+/* ══ API KEY ══ */
+.kwrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;gap:18px}
 .kicon{font-size:48px}
 .ktitle{font-family:var(--fd);font-size:32px;font-weight:900;text-align:center}
 .ksub{color:var(--muted);font-size:14px;text-align:center;line-height:1.6}
@@ -69,39 +95,51 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
 .knote{font-family:var(--fm);font-size:11px;color:var(--muted);text-align:center;line-height:1.6}
 .klink{color:var(--orange)}
 
-/* CAMERA */
+/* ══ CAMERA ══ */
 #scr-cam{position:relative;background:#000}
 #camv{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover}
 #camc{display:none}
 .chud{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none}
 .ctop{padding:calc(var(--st)+6px) 16px 10px;display:flex;align-items:center;justify-content:space-between;pointer-events:auto}
 .cclose{width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;font-size:20px;display:flex;align-items:center;justify-content:center}
-.cpill{display:flex;align-items:center;gap:7px;background:rgba(0,0,0,.72);border-radius:20px;padding:8px 14px;border:1px solid var(--orange)}
+.cpill{display:flex;align-items:center;gap:7px;background:rgba(0,0,0,.75);border-radius:20px;padding:8px 14px;border:1px solid var(--orange)}
 .cpdot{width:8px;height:8px;border-radius:50%;background:var(--orange);animation:bl 1.2s ease infinite}
 @keyframes bl{0%,100%{opacity:1}50%{opacity:.3}}
 .cptxt{font-family:var(--fm);font-size:11px;color:#fff;letter-spacing:1px}
-.ctip{align-self:center;background:rgba(0,0,0,.78);border-radius:8px;padding:10px 18px;border:1px solid var(--og);max-width:88%}
+.ctip{align-self:center;background:rgba(0,0,0,.82);border-radius:8px;padding:10px 18px;border:1px solid var(--og);max-width:88%}
 .ctiptxt{font-size:13px;text-align:center;line-height:1.5}
+.room-label-pill{align-self:center;background:var(--orange);border-radius:20px;padding:7px 16px;margin-top:6px}
+.room-label-txt{font-family:var(--fm);font-size:12px;color:#fff;font-weight:500}
 .cbot{background:rgba(8,10,14,.93);border-top:1px solid var(--bdr);padding:16px 20px calc(var(--sb)+14px);display:flex;flex-direction:column;gap:12px;pointer-events:auto}
-.shutter{width:72px;height:72px;border-radius:50%;background:var(--orange);border:4px solid rgba(255,98,0,.3);display:flex;align-items:center;justify-content:center;font-size:30px;align-self:center;transition:transform .1s}
-.shutter:active{transform:scale(.92)}
+.shutter{width:72px;height:72px;border-radius:50%;background:var(--orange);border:4px solid rgba(255,98,0,.35);display:flex;align-items:center;justify-content:center;font-size:30px;align-self:center;transition:transform .1s}
+.shutter:active{transform:scale(.9)}
 
-/* ANALYZING */
-.awrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;gap:20px;text-align:center}
+/* ══ ANALYZING ══ */
+.awrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;gap:18px;text-align:center}
 .spin{width:72px;height:72px;border-radius:50%;border:3px solid var(--s3);border-top-color:var(--orange);animation:sp 1s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
 .atitle{font-family:var(--fd);font-size:32px;font-weight:900}
 .asub{color:var(--muted);font-size:14px;line-height:1.6}
-.prev{width:100%;max-width:320px;border-radius:12px;border:1px solid var(--bdr);object-fit:cover;max-height:220px}
+.prev{width:100%;max-width:300px;border-radius:12px;border:1px solid var(--bdr);object-fit:cover;max-height:200px}
 
-/* DIMS */
+/* ══ DIMENSIONS ══ */
 .tbar{display:flex;background:var(--s1);border-bottom:1px solid var(--bdr);flex-shrink:0}
-.ti{flex:1;text-align:center;padding:12px 8px}
-.tv{font-family:var(--fm);font-size:22px;font-weight:500;color:var(--orange)}
+.ti{flex:1;text-align:center;padding:11px 6px}
+.tv{font-family:var(--fm);font-size:20px;font-weight:500;color:var(--orange)}
 .tl{font-family:var(--fm);font-size:9px;color:var(--muted);letter-spacing:1px;margin-top:2px}
 .tdiv{width:1px;background:var(--bdr);margin:8px 0}
-.rlist{padding:18px;display:flex;flex-direction:column;gap:14px}
-.rcard{background:var(--s1);border:1px solid var(--bdr);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:14px}
+.rlist{padding:16px;display:flex;flex-direction:column;gap:14px}
+
+/* Scan-new-room button — prominent */
+.scan-new-btn{background:var(--od);border:1px solid var(--orange);border-radius:12px;padding:18px 16px;display:flex;align-items:center;gap:14px;width:100%;transition:all .15s}
+.scan-new-btn:active{background:rgba(255,98,0,.2)}
+.scan-new-icon{font-size:28px}
+.scan-new-info{flex:1;text-align:left}
+.scan-new-title{font-family:var(--fm);font-size:13px;font-weight:500;color:var(--orange)}
+.scan-new-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.scan-new-arrow{font-size:20px;color:var(--orange)}
+
+.rcard{background:var(--s1);border:1px solid var(--bdr);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px}
 .rchdr{display:flex;align-items:center;gap:8px}
 .tscr{flex:1;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .tscr::-webkit-scrollbar{display:none}
@@ -109,24 +147,32 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
 .chip{background:var(--s3);border:1px solid var(--bdr);border-radius:6px;padding:6px 10px;white-space:nowrap;font-family:var(--fm);font-size:11px;font-weight:500;color:var(--muted);transition:all .15s}
 .chip.on{background:var(--od);border-color:var(--orange);color:var(--orange)}
 .rmbtn{width:30px;height:30px;border-radius:6px;background:rgba(255,68,85,.1);border:1px solid rgba(255,68,85,.2);color:var(--red);font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.dinputs{display:flex;gap:10px}
-.dgrp{flex:1;display:flex;flex-direction:column;gap:6px;align-items:center}
+.dinputs{display:flex;gap:8px}
+.dgrp{flex:1;display:flex;flex-direction:column;gap:5px;align-items:center}
 .dlbl{font-family:var(--fm);font-size:9px;color:var(--muted);letter-spacing:1px}
-.dinp{width:100%;background:var(--s2);border:1px solid var(--bdr);border-radius:8px;padding:12px 8px;color:var(--text);font-family:var(--fm);font-size:22px;font-weight:500;text-align:center;transition:border-color .15s}
+.dinp{width:100%;background:var(--s2);border:1px solid var(--bdr);border-radius:8px;padding:11px 6px;color:var(--text);font-family:var(--fm);font-size:20px;font-weight:500;text-align:center;transition:border-color .15s}
 .dinp:focus{border-color:var(--orange)}
 .dunit{font-family:var(--fm);font-size:10px;color:var(--muted)}
 .rcalc{font-family:var(--fm);font-size:11px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap}
 .aibadge{background:var(--od);border:1px solid rgba(255,98,0,.25);border-radius:8px;padding:10px 14px}
 .aibtxt{font-family:var(--fm);font-size:11px;color:var(--orange);text-align:center}
 .aicnote{font-family:var(--fm);font-size:10px;color:var(--muted);text-align:center;margin-top:4px}
-.addrm{border:1px dashed var(--bdr);border-radius:10px;padding:15px;display:flex;align-items:center;justify-content:center;gap:8px}
-.addrm:active{border-color:var(--orange)}
 
-/* WORK */
-.wlist{padding:18px;display:flex;flex-direction:column;gap:10px}
-.wcard{background:var(--s1);border:1px solid var(--bdr);border-radius:12px;padding:16px 18px;display:flex;align-items:center;gap:14px;transition:all .15s}
+/* ══ FLOOR PLAN ══ */
+.fp-wrap{padding:18px;display:flex;flex-direction:column;gap:14px}
+.fp-canvas-wrap{background:var(--s1);border:1px solid var(--bdr);border-radius:12px;overflow:hidden;position:relative}
+#fp-canvas{width:100%;display:block}
+.fp-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fp-info{background:var(--s1);border:1px solid var(--bdr);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.fp-info-row{display:flex;justify-content:space-between;align-items:center}
+.fp-info-lbl{font-size:13px;color:var(--muted)}
+.fp-info-val{font-family:var(--fm);font-size:13px;font-weight:500;color:var(--orange)}
+
+/* ══ WORK TYPES ══ */
+.wlist{padding:16px;display:flex;flex-direction:column;gap:10px}
+.wcard{background:var(--s1);border:1px solid var(--bdr);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:14px;transition:all .15s}
 .wcard.on{background:var(--od);border-color:var(--orange)}
-.wico{width:44px;height:44px;border-radius:10px;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;transition:background .15s}
+.wico{width:42px;height:42px;border-radius:10px;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;transition:background .15s}
 .wcard.on .wico{background:var(--od)}
 .winfo{flex:1}
 .wname{font-family:var(--fm);font-size:13px;font-weight:500;letter-spacing:.5px;transition:color .15s}
@@ -137,46 +183,56 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
 .chki{color:#fff;font-size:13px;font-weight:700;display:none}
 .wcard.on .chki{display:block}
 
-/* ESTIMATE */
-.ehero{background:linear-gradient(135deg,var(--s1) 0%,#0A0E16 100%);padding:calc(var(--st)+8px) 22px 24px;border-bottom:1px solid var(--bdr);position:relative;overflow:hidden;flex-shrink:0}
-.ehero::after{content:'';position:absolute;bottom:-50px;right:-50px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,var(--og) 0%,transparent 70%);pointer-events:none}
-.eback{display:flex;align-items:center;gap:6px;font-family:var(--fm);font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;background:none;border:none}
+/* ══ ESTIMATE ══ */
+.ehero{background:linear-gradient(135deg,var(--s1) 0%,#0A0E16 100%);padding:calc(var(--st)+8px) 22px 20px;border-bottom:1px solid var(--bdr);position:relative;overflow:hidden;flex-shrink:0}
+.ehero::after{content:'';position:absolute;bottom:-50px;right:-50px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(255,98,0,.2) 0%,transparent 70%);pointer-events:none}
+.eback{display:flex;align-items:center;gap:6px;font-family:var(--fm);font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;background:none;border:none}
 .eey{font-family:var(--fm);font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px}
-.etot{font-family:var(--fd);font-size:54px;font-weight:900;letter-spacing:-2px;color:var(--orange);line-height:1;margin-bottom:8px}
+.etot{font-family:var(--fd);font-size:50px;font-weight:900;letter-spacing:-2px;color:var(--orange);line-height:1;margin-bottom:6px}
 .emeta{font-family:var(--fm);font-size:12px;color:var(--muted)}
-.econt{padding:18px;display:flex;flex-direction:column;gap:12px}
+.econt{padding:16px;display:flex;flex-direction:column;gap:12px}
 .mgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.mcard{background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:14px;text-align:center}
-.mv{font-family:var(--fm);font-size:22px;font-weight:500;color:var(--orange)}
+.mcard{background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:12px;text-align:center}
+.mv{font-family:var(--fm);font-size:20px;font-weight:500;color:var(--orange)}
 .ml{font-family:var(--fm);font-size:9px;color:var(--muted);letter-spacing:1px;margin-top:3px}
 .rsum{background:var(--s1);border:1px solid var(--bdr);border-radius:10px;overflow:hidden}
-.rsumhdr{padding:12px 16px;border-bottom:1px solid var(--bdr);font-family:var(--fm);font-size:10px;color:var(--muted);letter-spacing:2px}
-.rrow{display:flex;align-items:center;padding:10px 16px;border-bottom:1px solid var(--s3);gap:10px}
+.rsumhdr{padding:11px 14px;border-bottom:1px solid var(--bdr);font-family:var(--fm);font-size:10px;color:var(--muted);letter-spacing:2px}
+.rrow{display:flex;align-items:center;padding:9px 14px;border-bottom:1px solid var(--s3);gap:8px}
 .rrow:last-child{border-bottom:none}
 .rn{flex:1;font-family:var(--fm);font-size:13px;font-weight:500}
 .rd{font-family:var(--fm);font-size:11px;color:var(--muted)}
-.rs{font-family:var(--fm);font-size:13px;color:var(--orange);font-weight:500}
+.rs{font-family:var(--fm);font-size:12px;color:var(--orange);font-weight:500}
 .li{background:var(--s1);border:1px solid var(--bdr);border-radius:10px;overflow:hidden}
-.lihdr{display:flex;align-items:center;padding:14px 16px;gap:12px}
-.liico{font-size:22px}
+.lihdr{display:flex;align-items:center;padding:13px 14px;gap:12px}
+.liico{font-size:20px}
 .linm{flex:1;font-family:var(--fm);font-size:13px;font-weight:500;letter-spacing:.5px}
-.lirng{font-family:var(--fm);font-size:14px;color:var(--orange);font-weight:500}
+.lirng{font-family:var(--fm);font-size:13px;color:var(--orange);font-weight:500}
 .liarr{color:var(--muted);font-size:12px;margin-left:6px;transition:transform .2s}
 .liarr.open{transform:rotate(180deg)}
-.libd{border-top:1px solid var(--bdr);background:var(--s2);padding:14px 16px;flex-direction:column;gap:8px;display:none}
+.libd{border-top:1px solid var(--bdr);background:var(--s2);padding:12px 14px;flex-direction:column;gap:8px;display:none}
 .libd.open{display:flex}
 .bdrow{display:flex;justify-content:space-between;align-items:center}
 .bdlbl{font-size:13px;color:var(--muted)}
 .bdval{font-family:var(--fm);font-size:12px}
 .bdnote{font-size:11px;color:var(--muted);line-height:1.5;margin-top:4px}
-.gtcard{background:var(--od);border:1px solid rgba(255,98,0,.3);border-radius:10px;padding:20px;text-align:center;display:flex;flex-direction:column;gap:6px}
+.gtcard{background:var(--od);border:1px solid rgba(255,98,0,.3);border-radius:10px;padding:18px;text-align:center;display:flex;flex-direction:column;gap:5px}
 .gtlbl{font-family:var(--fm);font-size:10px;color:var(--orange);letter-spacing:2px;text-transform:uppercase}
-.gtval{font-family:var(--fd);font-size:48px;font-weight:900;letter-spacing:-1.5px;color:var(--orange)}
+.gtval{font-family:var(--fd);font-size:44px;font-weight:900;letter-spacing:-1.5px;color:var(--orange)}
 .gtsub{font-family:var(--fm);font-size:12px;color:var(--muted)}
-.disc{background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:6px}
+.disc{background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:5px}
 .discttl{font-family:var(--fm);font-size:11px;color:var(--orange);font-weight:500}
 .discbdy{font-size:12px;color:var(--muted);line-height:1.6}
+/* Send buttons grid */
+.send-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .arow{display:flex;gap:10px}.arow .btn{flex:1}
+/* Send status */
+.send-status{border-radius:8px;padding:10px 14px;font-family:var(--fm);font-size:12px;text-align:center;display:none}
+.send-status.ok{display:block;background:var(--gd);border:1px solid var(--green);color:var(--green)}
+.send-status.err{display:block;background:rgba(255,68,85,.1);border:1px solid var(--red);color:var(--red)}
+
+/* Job name input */
+.job-input{background:var(--s2);border:1px solid var(--bdr);border-radius:8px;padding:12px 14px;color:var(--text);font-family:var(--fb);font-size:15px;width:100%;transition:border-color .15s}
+.job-input:focus{border-color:var(--orange)}
 </style>
 </head>
 <body>
@@ -184,19 +240,29 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
 <div id="toast"></div>
 <div id="app">
 
-<!-- HOME -->
+<!-- ═══ HOME ═══ -->
 <div class="scr on" id="scr-home">
   <div class="hero">
-    <div class="badge"><div class="bdot"></div><span class="btxt">CSC FIELD TOOLS</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div class="badge"><div class="bdot"></div><span class="btxt">CSC FIELD TOOLS</span></div>
+      <button onclick="show('scr-settings')" style="color:var(--muted);font-size:20px;padding:4px 0">⚙️</button>
+    </div>
     <div class="htitle">Room<br><span>Estimator</span></div>
-    <div class="hsub">Snap a photo of any room. Claude AI reads the dimensions automatically, then builds your estimate.</div>
+    <div class="hsub">Snap a photo — Claude AI reads dimensions automatically.</div>
   </div>
   <div class="scroll">
     <div class="hbody">
-      <button class="btn bp" onclick="goCamera()"><span>📸</span> Snap Photo to Measure</button>
+      <button class="btn bp" onclick="startNewJob()"><span>📸</span> New Job — Snap Photo</button>
       <button class="btn bs" onclick="goManual()"><span>✏️</span> Enter Dimensions Manually</button>
+      <!-- Saved estimates -->
+      <div id="saves-section" style="display:none">
+        <div class="saves-card">
+          <div class="clbl">Saved Estimates</div>
+          <div id="saves-list"></div>
+        </div>
+      </div>
       <div class="ccard">
-        <div class="clbl">Estimates cover</div>
+        <div class="clbl">Covers</div>
         <div id="cover-rows"></div>
       </div>
       <div style="text-align:center;padding:4px 0 8px"><span style="font-family:var(--fm);font-size:10px;color:var(--muted)">CSC License #TGC133460 · Internal use only</span></div>
@@ -204,40 +270,88 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
   </div>
 </div>
 
-<!-- API KEY -->
+<!-- ═══ SETTINGS ═══ -->
+<div class="scr" id="scr-settings">
+  <div class="hdr">
+    <div class="hdr-row">
+      <button class="back" onclick="show('scr-home')">←</button>
+      <div><div class="hdr-ttl">Settings</div><div class="hdr-sub">API keys & integrations</div></div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div class="settings-list">
+      <div class="setting-group">
+        <div class="sg-title">Claude AI (Photo Measurement)</div>
+        <div class="sg-body">
+          <div class="sg-row">
+            <div class="sg-lbl">ANTHROPIC API KEY</div>
+            <input class="sg-input" type="password" id="s-claude" placeholder="sk-ant-..." autocomplete="off" spellcheck="false">
+          </div>
+          <div class="sg-note">Get your key at <a class="sg-link" href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → API Keys. Free tier available.</div>
+        </div>
+      </div>
+      <div class="setting-group">
+        <div class="sg-title">GoHighLevel (GHL)</div>
+        <div class="sg-body">
+          <div class="sg-row">
+            <div class="sg-lbl">WEBHOOK URL</div>
+            <input class="sg-input" type="url" id="s-ghl" placeholder="https://hooks.zapier.com/..." autocomplete="off">
+          </div>
+          <div class="sg-note">In GHL: Automation → Webhook trigger. Or create a Zap in Zapier → Webhooks → Catch Hook. Paste the URL above. The app will POST the full estimate as JSON.</div>
+        </div>
+      </div>
+      <div class="setting-group">
+        <div class="sg-title">CompanyCam (via Zapier)</div>
+        <div class="sg-body">
+          <div class="sg-row">
+            <div class="sg-lbl">ZAPIER WEBHOOK URL</div>
+            <input class="sg-input" type="url" id="s-cc" placeholder="https://hooks.zapier.com/..." autocomplete="off">
+          </div>
+          <div class="sg-note">In Zapier: New Zap → Trigger: Webhooks (Catch Hook) → Action: CompanyCam (Create Photo or Add Note). Paste the webhook URL above.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ftr">
+    <button class="btn bp" onclick="saveSettings()">Save Settings</button>
+  </div>
+</div>
+
+<!-- ═══ API KEY (first-time) ═══ -->
 <div class="scr" id="scr-key">
   <div class="hdr">
     <div class="hdr-row">
-      <button class="back" onclick="show('scr-home',0)">←</button>
+      <button class="back" onclick="show('scr-home')">←</button>
       <div><div class="hdr-ttl">API Key</div><div class="hdr-sub">One-time setup</div></div>
     </div>
   </div>
   <div class="kwrap">
     <div class="kicon">🔑</div>
     <div class="ktitle">Connect to Claude AI</div>
-    <div class="ksub">The photo measurement uses Claude AI. Enter your Anthropic API key once — it's saved on your phone only.</div>
+    <div class="ksub">The photo measurement uses Claude AI. Enter your Anthropic API key — saved on your phone only.</div>
     <input class="kinput" type="password" id="akey" placeholder="sk-ant-..." autocomplete="off" spellcheck="false">
     <div class="knote">Get your free key at <a class="klink" href="https://console.anthropic.com" target="_blank">console.anthropic.com</a><br>Stored locally. Never sent anywhere except Anthropic.</div>
-    <button class="btn bp" onclick="saveKey()">Save & Continue →</button>
+    <button class="btn bp" onclick="saveKeyAndGo()">Save & Start Scanning →</button>
   </div>
 </div>
 
-<!-- CAMERA -->
+<!-- ═══ CAMERA ═══ -->
 <div class="scr" id="scr-cam">
   <video id="camv" autoplay playsinline muted></video>
-  <canvas id="camc"></canvas>
+  <canvas id="camc" style="display:none"></canvas>
   <div class="chud">
     <div class="ctop">
       <button class="cclose" onclick="stopCam()">✕</button>
-      <div class="cpill"><div class="cpdot"></div><span class="cptxt">CAMERA READY</span></div>
+      <div class="cpill"><div class="cpdot"></div><span class="cptxt" id="cam-pill-txt">CAMERA READY</span></div>
       <div style="width:40px"></div>
     </div>
-    <div class="ctip">
-      <div class="ctiptxt">📐 Stand in the doorway · show all 4 walls + ceiling in one shot</div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+      <div class="ctip"><div class="ctiptxt">📐 Stand in doorway · show all 4 walls + ceiling</div></div>
+      <div class="room-label-pill"><div class="room-label-txt" id="cam-room-label">Scanning Room 1</div></div>
     </div>
     <div class="cbot">
       <div style="font-family:var(--fm);font-size:11px;color:var(--muted);text-align:center;line-height:1.6">
-        Pro tip: include a door (80" tall) for more accurate results
+        Include a door (80" tall) for more accurate measurements
       </div>
       <button class="shutter" onclick="takePic()">📸</button>
       <button style="font-family:var(--fm);font-size:12px;color:var(--muted);text-align:center;width:100%;padding:8px" onclick="stopCam()">Cancel</button>
@@ -245,10 +359,10 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
   </div>
 </div>
 
-<!-- ANALYZING -->
+<!-- ═══ ANALYZING ═══ -->
 <div class="scr" id="scr-ai">
   <div class="hdr">
-    <div class="hdr-row"><div><div class="hdr-ttl">Analyzing Photo</div><div class="hdr-sub">Claude AI is measuring the room</div></div></div>
+    <div class="hdr-row"><div><div class="hdr-ttl">Analyzing</div><div class="hdr-sub" id="ai-room-lbl">Room 1 — Claude AI measuring</div></div></div>
   </div>
   <div class="awrap">
     <img id="prev-img" class="prev" src="" alt="Room photo">
@@ -258,33 +372,65 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
   </div>
 </div>
 
-<!-- DIMENSIONS -->
+<!-- ═══ DIMENSIONS ═══ -->
 <div class="scr" id="scr-dims">
   <div class="hdr">
     <div class="hdr-row">
-      <button class="back" onclick="show('scr-home',0)">←</button>
-      <div><div class="hdr-ttl">Dimensions</div><div class="hdr-sub">L × W × Ceiling in feet</div></div>
+      <button class="back" onclick="show('scr-home')">←</button>
+      <div style="flex:1">
+        <div class="hdr-ttl">Room Dimensions</div>
+        <div class="hdr-sub">Review AI measurements · adjust if needed</div>
+      </div>
+      <button onclick="show('scr-settings')" style="color:var(--muted);font-size:18px;padding:4px">⚙️</button>
     </div>
+  </div>
+  <!-- Job name -->
+  <div style="padding:12px 16px;background:var(--s1);border-bottom:1px solid var(--bdr);flex-shrink:0">
+    <input class="job-input" type="text" id="job-name" placeholder="Job / Property address…" autocomplete="off">
   </div>
   <div class="tbar" id="tbar" style="display:none">
     <div class="ti"><div class="tv" id="tfl">0</div><div class="tl">FLOOR SQFT</div></div>
     <div class="tdiv"></div>
     <div class="ti"><div class="tv" id="twl">0</div><div class="tl">WALL SQFT</div></div>
     <div class="tdiv"></div>
-    <div class="ti"><div class="tv" id="trm">1</div><div class="tl">ROOMS</div></div>
+    <div class="ti"><div class="tv" id="trm">0</div><div class="tl">ROOMS</div></div>
   </div>
   <div class="scroll"><div class="rlist" id="rlist"></div></div>
   <div class="ftr">
-    <button class="btn bs" onclick="addRoom()">+ Add Another Room</button>
-    <button class="btn bp" id="dcont" onclick="toWork()" disabled>Select Work Types →</button>
+    <button class="btn bp" id="dcont" onclick="show('scr-fp')" disabled>View Floor Plan →</button>
   </div>
 </div>
 
-<!-- WORK TYPES -->
+<!-- ═══ FLOOR PLAN ═══ -->
+<div class="scr" id="scr-fp">
+  <div class="hdr">
+    <div class="hdr-row">
+      <button class="back" onclick="show('scr-dims')">←</button>
+      <div><div class="hdr-ttl">Floor Plan</div><div class="hdr-sub">Tap any room to edit</div></div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div class="fp-wrap">
+      <div class="fp-canvas-wrap">
+        <canvas id="fp-canvas"></canvas>
+      </div>
+      <div class="fp-info" id="fp-info"></div>
+      <div class="fp-actions">
+        <button class="btn bs" onclick="exportFloorPlan()">⬇ Save as Image</button>
+        <button class="btn bs" onclick="shareFloorPlan()">↑ Share Diagram</button>
+      </div>
+    </div>
+  </div>
+  <div class="ftr">
+    <button class="btn bp" onclick="toWork()">Select Work Types →</button>
+  </div>
+</div>
+
+<!-- ═══ WORK TYPES ═══ -->
 <div class="scr" id="scr-work">
   <div class="hdr">
     <div class="hdr-row">
-      <button class="back" onclick="show('scr-dims',2)">←</button>
+      <button class="back" onclick="show('scr-fp')">←</button>
       <div><div class="hdr-ttl">Scope of Work</div><div class="hdr-sub" id="wsub">Select all that apply</div></div>
     </div>
   </div>
@@ -292,27 +438,44 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
   <div class="ftr"><button class="btn bp" id="wcont" onclick="toEst()" disabled>Generate Estimate →</button></div>
 </div>
 
-<!-- ESTIMATE -->
+<!-- ═══ ESTIMATE ═══ -->
 <div class="scr" id="scr-est">
   <div class="ehero">
-    <button class="eback" onclick="show('scr-work',3)">← Back</button>
+    <button class="eback" onclick="show('scr-work')">← Back</button>
     <div class="eey">Estimate Range</div>
     <div class="etot" id="etot">—</div>
     <div class="emeta" id="emeta"></div>
   </div>
-  <div class="scroll"><div class="econt" id="econt"></div></div>
+  <div class="scroll">
+    <div class="econt" id="econt"></div>
+  </div>
   <div class="ftr">
+    <!-- Share / Copy -->
     <div class="arow">
       <button class="btn bp" onclick="shareEst()">↑ Share</button>
       <button class="btn bs" onclick="copyEst()">📋 Copy</button>
     </div>
-    <button class="btn bs" style="padding:13px;font-size:13px" onclick="goHome()">Start New Estimate</button>
+    <!-- Save locally -->
+    <button class="btn bs" onclick="saveEst()">💾 Save Estimate</button>
+    <!-- Integrations -->
+    <div class="send-grid">
+      <button class="btn bg" onclick="sendGHL()" id="ghl-btn">
+        <span>⚡</span> Send to GHL
+      </button>
+      <button class="btn bb" onclick="sendCC()" id="cc-btn">
+        <span>📷</span> CompanyCam
+      </button>
+    </div>
+    <div class="send-status" id="send-status"></div>
+    <button class="btn bs" style="padding:13px;font-size:12px" onclick="goHome()">Start New Estimate</button>
   </div>
 </div>
 
-</div>
+</div><!-- #app -->
 <script>
+// ═══════════════════════════════════════════════
 // DATA
+// ═══════════════════════════════════════════════
 const WT=[
   {id:'drywall', name:'Drywall',         icon:'🧱',basis:'wall', lr:2.5, hr:5,   mp:.4, lp:.6, note:'Hang, tape, mud, sand. Prime/paint separate.'},
   {id:'flooring',name:'Flooring',        icon:'🪵',basis:'floor',lr:4,   hr:10,  mp:.55,lp:.45,note:'LVP mid-grade. Tile/hardwood runs higher.'},
@@ -325,43 +488,97 @@ const WT=[
   {id:'full',    name:'Full Renovation', icon:'🏗️',basis:'floor',lr:50,  hr:120, mp:.48,lp:.52,note:'Full gut rehab — cosmetic + mechanical.'},
 ];
 const RT=['Living Room','Bedroom','Kitchen','Bathroom','Basement','Dining Room','Hallway','Bonus Room','Office'];
-const PROG={'scr-home':0,'scr-key':10,'scr-cam':20,'scr-ai':35,'scr-dims':50,'scr-work':75,'scr-est':100};
+const PROG={'scr-home':0,'scr-key':5,'scr-settings':5,'scr-cam':20,'scr-ai':35,'scr-dims':50,'scr-fp':62,'scr-work':75,'scr-est':100};
 
-let rooms=[], sel=[], camStream=null;
+let rooms=[], sel=[], camStream=null, scanningRoomIdx=0;
+let fpImageDataUrl=null;
 
+// ═══════════════════════════════════════════════
 // INIT
+// ═══════════════════════════════════════════════
 (function(){
-  renderCover(); rooms=[fresh()]; renderWT();
+  renderCover(); rooms=[fresh()]; renderWT(); loadSettings(); renderSaves();
 })();
 
-// NAV
+// ═══════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════
 function show(id){
   document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
   document.getElementById(id).classList.add('on');
   document.getElementById('prog-fill').style.width=(PROG[id]||0)+'%';
+  if(id==='scr-fp') drawFP();
 }
-function goHome(){ stopCamClean(); rooms=[fresh()]; sel=[]; renderRooms(); renderWT(); show('scr-home'); }
-function goManual(){ stopCamClean(); if(!rooms.length)rooms=[fresh()]; renderRooms(); show('scr-dims'); }
-function goCamera(){ if(!getKey()){show('scr-key');return;} startCam(); }
-function toWork(){ document.getElementById('wsub').textContent=`${rooms.length} room${rooms.length!==1?'s':''} · ${Math.round(rooms.reduce((s,r)=>s+fl(r),0))} sqft`; renderWT(); show('scr-work'); }
+
+function goHome(){
+  stopCamClean(); rooms=[fresh()]; sel=[];
+  renderRooms(); renderWT(); renderSaves(); show('scr-home');
+}
+
+function goManual(){
+  stopCamClean(); if(!rooms.length) rooms=[fresh()];
+  renderRooms(); show('scr-dims');
+}
+
+function startNewJob(){
+  const key=getKey();
+  if(!key){ show('scr-key'); return; }
+  rooms=[]; sel=[]; scanningRoomIdx=0;
+  document.getElementById('job-name').value='';
+  launchCam(0);
+}
+
+function toWork(){
+  const tf=rooms.reduce((s,r)=>s+fl(r),0);
+  document.getElementById('wsub').textContent=`${rooms.length} room${rooms.length!==1?'s':''} · ${Math.round(tf)} sqft`;
+  renderWT(); show('scr-work');
+}
+
 function toEst(){ buildEst(); show('scr-est'); }
 
-// KEY
-function getKey(){ return localStorage.getItem('csc_key')||''; }
-function saveKey(){
+// ═══════════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════════
+function loadSettings(){
+  document.getElementById('s-claude').value=ls('csc_key')||'';
+  document.getElementById('s-ghl').value=ls('csc_ghl')||'';
+  document.getElementById('s-cc').value=ls('csc_cc')||'';
+}
+function saveSettings(){
+  const claude=document.getElementById('s-claude').value.trim();
+  const ghl=document.getElementById('s-ghl').value.trim();
+  const cc=document.getElementById('s-cc').value.trim();
+  if(claude) lsSet('csc_key',claude);
+  if(ghl) lsSet('csc_ghl',ghl);
+  if(cc) lsSet('csc_cc',cc);
+  toast('✓ Settings saved'); show('scr-home');
+}
+function getKey(){ return ls('csc_key')||''; }
+function saveKeyAndGo(){
   const v=document.getElementById('akey').value.trim();
-  if(!v.startsWith('sk-ant-')){toast('Key must start with sk-ant-');return;}
-  localStorage.setItem('csc_key',v); toast('✓ Saved'); startCam();
+  if(!v.startsWith('sk-ant-')){ toast('Key must start with sk-ant-'); return; }
+  lsSet('csc_key',v); toast('✓ Saved'); launchCam(0);
 }
 
+// ═══════════════════════════════════════════════
 // CAMERA
+// ═══════════════════════════════════════════════
+function launchCam(roomIdx){
+  scanningRoomIdx=roomIdx;
+  const label=roomIdx===0?'Scanning Room 1':`Scanning Room ${roomIdx+1}`;
+  document.getElementById('cam-room-label').textContent=label;
+  document.getElementById('cam-pill-txt').textContent='CAMERA READY';
+  startCam();
+}
+
 async function startCam(){
   try{
     camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}}});
     const v=document.getElementById('camv'); v.srcObject=camStream; await v.play(); show('scr-cam');
-  }catch(e){ alert('Camera not available. Use "Enter Dimensions Manually" instead.'); }
+  }catch(e){ alert('Camera not available.\nUse "Enter Dimensions Manually" instead.'); }
 }
-function stopCam(){ stopCamClean(); show('scr-home'); }
+
+function stopCam(){ stopCamClean(); show('scr-dims'); renderRooms(); }
 function stopCamClean(){ if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;} }
 
 function takePic(){
@@ -370,38 +587,39 @@ function takePic(){
   const ctx=c.getContext('2d'); ctx.drawImage(v,0,0,c.width,c.height);
   let q=0.85, du=c.toDataURL('image/jpeg',q);
   while(du.length>1400000&&q>0.4){q-=0.1;du=c.toDataURL('image/jpeg',q);}
-  const b64=du.split(',')[1];
   document.getElementById('prev-img').src=du;
-  stopCamClean(); show('scr-ai'); analyzePhoto(b64);
+  document.getElementById('ai-room-lbl').textContent=`Room ${scanningRoomIdx+1} — Claude AI measuring`;
+  stopCamClean(); show('scr-ai'); analyzePhoto(du.split(',')[1], scanningRoomIdx);
 }
 
+// ═══════════════════════════════════════════════
 // AI ANALYSIS
-async function analyzePhoto(b64){
+// ═══════════════════════════════════════════════
+async function analyzePhoto(b64, roomIdx){
   const msgs=['Detecting walls, floor, and ceiling…','Estimating room proportions…','Calculating dimensions…','Almost done…'];
   let mi=0; const el=document.getElementById('asub');
   const iv=setInterval(()=>{ el.textContent=msgs[mi=(mi+1)%msgs.length]; },2000);
 
-  const prompt=`You are a professional room measurement assistant. Analyze this room photo and estimate dimensions.
+  const prompt=`You are a professional room measurement assistant. Analyze this interior room photo.
 
-Visual cues to use:
-- Standard door = 80" tall (6'8"), 32-36" wide
-- Standard ceiling = 8-9 feet
-- Drywall sheet = 4x8 feet
-- Standard window = 3x4 feet
-- Furniture proportions, floor tile size, baseboard height
+Visual reference cues:
+- Standard interior door: 80" tall (6'8"), 32-36" wide
+- Standard ceiling: 8-9 feet (measure carefully)
+- Standard window: approx 3x4 feet
+- Drywall sheet: 4x8 feet
+- Use perspective lines, baseboards, furniture, tile grout lines
 
-Return ONLY valid JSON, no other text:
+Return ONLY valid JSON, no markdown, no explanation:
 {
-  "length": <longest dimension in feet, 1 decimal place>,
-  "width": <shorter dimension in feet, 1 decimal place>,
-  "height": <ceiling height in feet, 1 decimal place>,
+  "length": <longest floor dimension in feet, 1 decimal>,
+  "width": <shorter floor dimension in feet, 1 decimal>,
+  "height": <ceiling height in feet, 1 decimal>,
   "confidence": "low" | "medium" | "high",
-  "room_type": "Living Room" | "Bedroom" | "Kitchen" | "Bathroom" | "Basement" | "Dining Room" | "Hallway" | "Bonus Room" | "Office",
-  "notes": "<what visual cues you used to estimate>",
-  "reference_objects": "<objects used as scale reference, or none>"
+  "room_type": "Living Room"|"Bedroom"|"Kitchen"|"Bathroom"|"Basement"|"Dining Room"|"Hallway"|"Bonus Room"|"Office",
+  "notes": "<visual cues used>",
+  "reference_objects": "<scale references found, or none>"
 }
-
-If not a room interior, return: {"error":"Not a room — please stand in the doorway and show all 4 walls"}`;
+If not an interior room: {"error":"Not a room interior — stand in doorway showing all 4 walls"}`;
 
   try{
     const r=await fetch('https://api.anthropic.com/v1/messages',{
@@ -415,7 +633,7 @@ If not a room interior, return: {"error":"Not a room — please stand in the doo
     clearInterval(iv);
     if(!r.ok){
       const e=await r.json().catch(()=>({}));
-      if(r.status===401){toast('Invalid API key');localStorage.removeItem('csc_key');show('scr-key');return;}
+      if(r.status===401){ toast('Invalid API key — update in Settings'); lsRm('csc_key'); show('scr-key'); return; }
       throw new Error(e.error?.message||'API error '+r.status);
     }
     const data=await r.json();
@@ -423,77 +641,271 @@ If not a room interior, return: {"error":"Not a room — please stand in the doo
     let p;
     try{ p=JSON.parse(txt.replace(/```json|```/g,'').trim()); }
     catch{ const m=txt.match(/\{[\s\S]*\}/); p=m?JSON.parse(m[0]):null; }
-    if(!p) throw new Error('Could not parse response');
-    if(p.error){toast(p.error); startCam(); return;}
+    if(!p) throw new Error('Could not parse AI response');
+    if(p.error){ toast(p.error); launchCam(roomIdx); return; }
     if(!p.length||!p.width||!p.height) throw new Error('Incomplete dimensions');
 
-    rooms=[{name:p.room_type||'Living Room',length:p.length.toFixed(1),width:p.width.toFixed(1),height:p.height.toFixed(1),_ai:true,_conf:p.confidence||'medium',_notes:p.notes||'',_refs:p.reference_objects||''}];
+    const newRoom={
+      name:p.room_type||'Living Room',
+      length:p.length.toFixed(1), width:p.width.toFixed(1), height:p.height.toFixed(1),
+      _ai:true, _conf:p.confidence||'medium', _notes:p.notes||'', _refs:p.reference_objects||''
+    };
+
+    // Insert or replace at roomIdx
+    if(roomIdx >= rooms.length) rooms.push(newRoom);
+    else rooms[roomIdx]=newRoom;
+
     renderRooms(); show('scr-dims');
+
   }catch(e){
     clearInterval(iv);
-    console.error(e);
-    toast('Could not analyze: '+(e.message||'Unknown error'));
-    rooms=[fresh()]; renderRooms(); show('scr-dims');
+    toast('Analysis failed: '+(e.message||'Unknown error'));
+    rooms[roomIdx]=rooms[roomIdx]||fresh();
+    renderRooms(); show('scr-dims');
   }
 }
 
+// ═══════════════════════════════════════════════
 // ROOMS
-function fresh(){return{name:'Living Room',length:'',width:'',height:'9'};}
-function fl(r){return(parseFloat(r.length)||0)*(parseFloat(r.width)||0);}
-function wl(r){return 2*((parseFloat(r.length)||0)+(parseFloat(r.width)||0))*(parseFloat(r.height)||0);}
-function addRoom(){rooms.push(fresh());renderRooms();}
-function rmRoom(i){if(rooms.length>1){rooms.splice(i,1);renderRooms();}}
-function upRoom(i,f,v){rooms[i][f]=v;upTotals();upDimBtn();}
-function setType(i,n){rooms[i].name=n;renderRooms();}
+// ═══════════════════════════════════════════════
+function fresh(){ return {name:'Living Room',length:'',width:'',height:'9'}; }
+function fl(r){ return (parseFloat(r.length)||0)*(parseFloat(r.width)||0); }
+function wl(r){ return 2*((parseFloat(r.length)||0)+(parseFloat(r.width)||0))*(parseFloat(r.height)||0); }
+function addRoom(){ rooms.push(fresh()); renderRooms(); }
+function rmRoom(i){ if(rooms.length>1){rooms.splice(i,1);renderRooms();} }
+function upRoom(i,f,v){ rooms[i][f]=v; upTotals(); upDimBtn(); }
+function setType(i,n){ rooms[i].name=n; renderRooms(); }
+
+// Launch camera to scan a specific room index
+function scanRoom(idx){
+  const key=getKey();
+  if(!key){ show('scr-key'); return; }
+  launchCam(idx);
+}
+
+// Add a new room slot and immediately scan it
+function addAndScanRoom(){
+  const key=getKey();
+  if(!key){ show('scr-key'); return; }
+  rooms.push(fresh());
+  renderRooms();
+  launchCam(rooms.length-1);
+}
 
 function renderRooms(){
   const list=document.getElementById('rlist'); list.innerHTML='';
+
   rooms.forEach((r,i)=>{
     const ai=r._ai;
-    const cc=r._conf==='high'?'var(--green)':'var(--orange)';
+    const cc=r._conf==='high'?'var(--green)':r._conf==='low'?'var(--red)':'var(--orange)';
     const aib=ai?`<div class="aibadge">
       <div class="aibtxt">🤖 AI Measured · Confidence: <span style="color:${cc}">${(r._conf||'medium').toUpperCase()}</span></div>
       ${r._notes?`<div class="aicnote">${r._notes}</div>`:''}
-      ${r._refs&&r._refs!=='none'?`<div class="aicnote">Reference: ${r._refs}</div>`:''}
-      <div class="aicnote" style="color:var(--orange);margin-top:4px">Adjust below if needed</div>
+      ${r._refs&&r._refs!=='none'&&r._refs?`<div class="aicnote">Reference: ${r._refs}</div>`:''}
+      <div class="aicnote" style="color:var(--orange);margin-top:4px">Adjust below if needed · or <button onclick="scanRoom(${i})" style="color:var(--orange);font-family:var(--fm);font-size:10px;text-decoration:underline;background:none;border:none;cursor:pointer">re-scan this room</button></div>
     </div>`:'';
     const chips=RT.map(t=>`<div class="chip${r.name===t?' on':''}" onclick="setType(${i},'${t}')">${t}</div>`).join('');
     const rm=rooms.length>1?`<button class="rmbtn" onclick="rmRoom(${i})">✕</button>`:'';
-    const f=fl(r),calc=f>0?`<div class="rcalc"><span>${Math.round(f)} floor sqft</span><span style="color:var(--bdr)">·</span><span>${Math.round(wl(r))} wall sqft</span></div>`:'';
-    list.innerHTML+=`<div class="rcard">${aib}<div class="rchdr"><div class="tscr"><div class="tchips">${chips}</div></div>${rm}</div>
-      <div class="dinputs">${['length','width','height'].map(f=>`<div class="dgrp"><div class="dlbl">${f==='height'?'CEILING':f.toUpperCase()}</div>
-        <input class="dinp" type="number" inputmode="decimal" value="${r[f]}" placeholder="0" min="0" step="0.5" oninput="upRoom(${i},'${f}',this.value)">
-        <div class="dunit">ft</div></div>`).join('')}</div>${calc}</div>`;
+    const f=fl(r), calc=f>0?`<div class="rcalc"><span>${Math.round(f)} floor sqft</span><span style="color:var(--bdr)">·</span><span>${Math.round(wl(r))} wall sqft</span></div>`:'';
+    list.innerHTML+=`<div class="rcard">${aib}
+      <div class="rchdr"><div class="tscr"><div class="tchips">${chips}</div></div>${rm}</div>
+      <div class="dinputs">${['length','width','height'].map(fld=>`<div class="dgrp">
+        <div class="dlbl">${fld==='height'?'CEILING':fld.toUpperCase()}</div>
+        <input class="dinp" type="number" inputmode="decimal" value="${r[fld]}" placeholder="0" min="0" step="0.5" oninput="upRoom(${i},'${fld}',this.value)">
+        <div class="dunit">ft</div></div>`).join('')}</div>
+      ${calc}</div>`;
   });
-  list.innerHTML+=`<div class="addrm" onclick="addRoom()"><span style="font-size:20px;color:var(--muted)">+</span><span style="font-family:var(--fm);font-size:13px;color:var(--muted)">Add Another Room</span></div>`;
+
+  // Prominent "Scan another room" button
+  list.innerHTML+=`<button class="scan-new-btn" onclick="addAndScanRoom()">
+    <div class="scan-new-icon">📸</div>
+    <div class="scan-new-info">
+      <div class="scan-new-title">Scan Another Room</div>
+      <div class="scan-new-sub">Opens camera · AI measures automatically</div>
+    </div>
+    <div class="scan-new-arrow">→</div>
+  </button>
+  <button class="btn bs" style="padding:13px" onclick="addRoom()">+ Add Room Manually</button>`;
+
   upTotals(); upDimBtn();
 }
 
 function upTotals(){
-  const tf=rooms.reduce((s,r)=>s+fl(r),0),tw=rooms.reduce((s,r)=>s+wl(r),0);
+  const tf=rooms.reduce((s,r)=>s+fl(r),0), tw=rooms.reduce((s,r)=>s+wl(r),0);
   const bar=document.getElementById('tbar');
-  if(tf>0){bar.style.display='flex';document.getElementById('tfl').textContent=Math.round(tf);document.getElementById('twl').textContent=Math.round(tw);document.getElementById('trm').textContent=rooms.length;}
-  else bar.style.display='none';
+  if(tf>0){
+    bar.style.display='flex';
+    document.getElementById('tfl').textContent=Math.round(tf);
+    document.getElementById('twl').textContent=Math.round(tw);
+    document.getElementById('trm').textContent=rooms.length;
+  } else bar.style.display='none';
 }
-function upDimBtn(){document.getElementById('dcont').disabled=!rooms.every(r=>parseFloat(r.length)>0&&parseFloat(r.width)>0&&parseFloat(r.height)>0);}
 
+function upDimBtn(){
+  document.getElementById('dcont').disabled=!rooms.every(r=>parseFloat(r.length)>0&&parseFloat(r.width)>0&&parseFloat(r.height)>0);
+}
+
+// ═══════════════════════════════════════════════
+// FLOOR PLAN (SVG on Canvas)
+// ═══════════════════════════════════════════════
+function drawFP(){
+  const canvas=document.getElementById('fp-canvas');
+  const wrap=canvas.parentElement;
+  const W=wrap.clientWidth||350;
+  const PAD=32, DIM_H=24, LABEL_H=28;
+
+  // Layout: pack rooms in a row, auto-wrap if needed
+  const valid=rooms.filter(r=>fl(r)>0);
+  if(!valid.length){ canvas.width=W; canvas.height=120; const ctx=canvas.getContext('2d'); ctx.fillStyle='#4A5568'; ctx.font='14px monospace'; ctx.textAlign='center'; ctx.fillText('No rooms measured yet',W/2,60); return; }
+
+  // Find scale: fit all rooms side by side
+  const maxW=Math.max(...valid.map(r=>parseFloat(r.width)));
+  const totalL=valid.reduce((s,r)=>s+parseFloat(r.length),0);
+  const usableW=W-PAD*2-DIM_H*(valid.length+1)*0.5;
+  const scale=Math.min(usableW/totalL, (W-PAD*2)/(maxW+4));
+  const rowH=Math.round(maxW*scale)+DIM_H+LABEL_H+PAD;
+  const H=PAD+rowH+PAD;
+
+  canvas.width=W; canvas.height=H;
+  const ctx=canvas.getContext('2d');
+
+  // Background
+  ctx.fillStyle='#0F1218'; ctx.fillRect(0,0,W,H);
+
+  // Grid dots
+  ctx.fillStyle='rgba(255,255,255,0.04)';
+  for(let x=PAD;x<W-PAD;x+=20) for(let y=PAD;y<H-PAD;y+=20){ ctx.beginPath(); ctx.arc(x,y,1,0,Math.PI*2); ctx.fill(); }
+
+  let curX=PAD+DIM_H/2;
+  const TOP=PAD+DIM_H/2;
+
+  valid.forEach((r,i)=>{
+    const rw=Math.round(parseFloat(r.length)*scale);
+    const rh=Math.round(parseFloat(r.width)*scale);
+    const x=curX, y=TOP+Math.round((maxW-parseFloat(r.width))*scale/2);
+    const COLORS=['#FF6200','#00C87A','#3B82F6','#A855F7','#F59E0B'];
+    const col=COLORS[i%COLORS.length];
+
+    // Room fill
+    ctx.fillStyle='rgba(255,98,0,0.06)';
+    if(i===1) ctx.fillStyle='rgba(0,200,122,0.06)';
+    if(i===2) ctx.fillStyle='rgba(59,130,246,0.06)';
+    ctx.fillRect(x,y,rw,rh);
+
+    // Room border
+    ctx.strokeStyle=col; ctx.lineWidth=1.5;
+    ctx.setLineDash([]);
+    ctx.strokeRect(x,y,rw,rh);
+
+    // Corner ticks
+    ctx.strokeStyle=col; ctx.lineWidth=2;
+    [[x,y],[x+rw,y],[x,y+rh],[x+rw,y+rh]].forEach(([cx,cy])=>{
+      const sx=cx===x?1:-1, sy=cy===y?1:-1;
+      ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+sx*8,cy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx,cy+sy*8); ctx.stroke();
+    });
+
+    // Room name + sqft (centered)
+    ctx.fillStyle='#E2E8F4'; ctx.font=`bold ${Math.min(13,rw/r.name.length*1.4)}px 'DM Mono',monospace`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    const nameY=y+rh/2-8;
+    if(rh>30){ ctx.fillText(r.name, x+rw/2, nameY); }
+    ctx.fillStyle=col; ctx.font=`${Math.min(11,rw/8)}px 'DM Mono',monospace`;
+    if(rh>44){ ctx.fillText(`${Math.round(fl(r))} sqft`, x+rw/2, nameY+18); }
+
+    // Dimension lines
+    ctx.strokeStyle=col; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+    ctx.fillStyle=col; ctx.font='10px DM Mono,monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+
+    // Top dimension (length)
+    const topY=y-14;
+    ctx.beginPath(); ctx.moveTo(x,topY); ctx.lineTo(x+rw,topY); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(x,topY-4); ctx.lineTo(x,topY+4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x+rw,topY-4); ctx.lineTo(x+rw,topY+4); ctx.stroke();
+    ctx.fillStyle='#0F1218'; ctx.fillRect(x+rw/2-22,topY-8,44,16);
+    ctx.fillStyle=col; ctx.fillText(`${r.length}'`, x+rw/2, topY);
+
+    // Right dimension (width)
+    const rightX=x+rw+14;
+    ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(rightX,y); ctx.lineTo(rightX,y+rh); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(rightX-4,y); ctx.lineTo(rightX+4,y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(rightX-4,y+rh); ctx.lineTo(rightX+4,y+rh); ctx.stroke();
+    ctx.save(); ctx.translate(rightX,y+rh/2); ctx.rotate(-Math.PI/2);
+    ctx.fillStyle='#0F1218'; ctx.fillRect(-22,-8,44,16);
+    ctx.fillStyle=col; ctx.fillText(`${r.width}'`, 0, 0);
+    ctx.restore();
+
+    // Ceiling tag bottom
+    ctx.fillStyle='rgba(255,255,255,0.06)'; ctx.fillRect(x,y+rh+2,rw,LABEL_H-4);
+    ctx.fillStyle='#4A5568'; ctx.font='9px DM Mono,monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(`↕ ${r.height}' ceiling`, x+rw/2, y+rh+LABEL_H/2+1);
+
+    curX+=rw+DIM_H;
+  });
+
+  // Title
+  const job=document.getElementById('job-name').value||'CSC Floor Plan';
+  ctx.fillStyle='rgba(255,255,255,0.35)'; ctx.font='bold 11px DM Mono,monospace'; ctx.textAlign='left'; ctx.textBaseline='top';
+  ctx.fillText(job.toUpperCase(), PAD, 10);
+  ctx.textAlign='right';
+  ctx.fillText(new Date().toLocaleDateString(), W-PAD, 10);
+
+  // Store for export
+  fpImageDataUrl=canvas.toDataURL('image/png');
+
+  // Update info panel
+  const tf=rooms.reduce((s,r)=>s+fl(r),0), tw=rooms.reduce((s,r)=>s+wl(r),0);
+  document.getElementById('fp-info').innerHTML=
+    [['Total Floor Area',`${Math.round(tf)} sqft`],['Total Wall Area',`${Math.round(tw)} sqft`],['Rooms',rooms.length],['Avg Ceiling',`${(rooms.reduce((s,r)=>s+parseFloat(r.height||0),0)/rooms.length).toFixed(1)} ft`]]
+    .map(([l,v])=>`<div class="fp-info-row"><span class="fp-info-lbl">${l}</span><span class="fp-info-val">${v}</span></div>`).join('');
+}
+
+function exportFloorPlan(){
+  if(!fpImageDataUrl){ toast('Draw floor plan first'); return; }
+  const a=document.createElement('a');
+  const job=(document.getElementById('job-name').value||'CSC-Floor-Plan').replace(/\s+/g,'-');
+  a.download=`${job}.png`; a.href=fpImageDataUrl; a.click();
+  toast('✓ Floor plan saved');
+}
+
+async function shareFloorPlan(){
+  if(!fpImageDataUrl){ toast('Draw floor plan first'); return; }
+  try{
+    const res=await fetch(fpImageDataUrl);
+    const blob=await res.blob();
+    const file=new File([blob],'CSC-Floor-Plan.png',{type:'image/png'});
+    if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:'CSC Floor Plan'});
+    } else { exportFloorPlan(); }
+  }catch(e){ exportFloorPlan(); }
+}
+
+// ═══════════════════════════════════════════════
 // WORK TYPES
+// ═══════════════════════════════════════════════
 function renderWT(){
-  document.getElementById('wlist').innerHTML=WT.map(w=>`<div class="wcard${sel.includes(w.id)?' on':''}" onclick="togW('${w.id}')">
-    <div class="wico">${w.icon}</div><div class="winfo"><div class="wname">${w.name.toUpperCase()}</div><div class="wnote">${w.note}</div></div>
-    <div class="wchk"><div class="chki">✓</div></div></div>`).join('');
+  document.getElementById('wlist').innerHTML=WT.map(w=>`
+    <div class="wcard${sel.includes(w.id)?' on':''}" onclick="togW('${w.id}')">
+      <div class="wico">${w.icon}</div>
+      <div class="winfo"><div class="wname">${w.name.toUpperCase()}</div><div class="wnote">${w.note}</div></div>
+      <div class="wchk"><div class="chki">✓</div></div>
+    </div>`).join('');
   document.getElementById('wcont').disabled=sel.length===0;
 }
-function togW(id){sel=sel.includes(id)?sel.filter(x=>x!==id):[...sel,id];renderWT();}
+function togW(id){ sel=sel.includes(id)?sel.filter(x=>x!==id):[...sel,id]; renderWT(); }
 
+// ═══════════════════════════════════════════════
 // ESTIMATE
-function fD(n){'$'+Math.round(n).toLocaleString();}
+// ═══════════════════════════════════════════════
 const fd=n=>'$'+Math.round(n).toLocaleString();
 const fk=n=>n>=1000?'$'+(n/1000).toFixed(0)+'K':'$'+Math.round(n);
 const fr=(l,h)=>`${fk(l)} – ${fk(h)}`;
 
 function calcI(w){
-  const tf=rooms.reduce((s,r)=>s+fl(r),0),tw=rooms.reduce((s,r)=>s+wl(r),0);
+  const tf=rooms.reduce((s,r)=>s+fl(r),0), tw=rooms.reduce((s,r)=>s+wl(r),0);
   const k=Math.max(1,rooms.filter(r=>r.name==='Kitchen').length);
   const b=Math.max(1,rooms.filter(r=>r.name==='Bathroom').length);
   let lo=0,hi=0,sq=0,bd=[];
@@ -501,42 +913,192 @@ function calcI(w){
   else if(w.basis==='floor'){sq=Math.round(tf);lo=sq*w.lr;hi=sq*w.hr;bd=[{l:'Floor Area',v:`${sq} sqft`},{l:'Rate',v:`$${w.lr}–$${w.hr}/sqft`},{l:'Material',v:fd(lo*w.mp)},{l:'Labor',v:fd(lo*w.lp)}];}
   else if(w.id==='kitchen'){lo=w.lf*k;hi=w.hf*k;bd=[{l:'Kitchens',v:k},...w.bd.map(b=>({l:b.l,v:fd(w.lf*b.p)}))];}
   else if(w.id==='bathroom'){lo=w.lf*b;hi=w.hf*b;bd=[{l:'Bathrooms',v:b},...w.bd.map(b=>({l:b.l,v:fd(w.lf*b.p)}))];}
-  return {...w,lo,hi,sq,bd};
+  return{...w,lo,hi,sq,bd};
 }
 
 function buildEst(){
   const its=sel.map(id=>calcI(WT.find(w=>w.id===id)));
-  const gl=its.reduce((s,i)=>s+i.lo,0),gh=its.reduce((s,i)=>s+i.hi,0);
-  const tf=rooms.reduce((s,r)=>s+fl(r),0),tw=rooms.reduce((s,r)=>s+wl(r),0);
+  const gl=its.reduce((s,i)=>s+i.lo,0), gh=its.reduce((s,i)=>s+i.hi,0);
+  const tf=rooms.reduce((s,r)=>s+fl(r),0), tw=rooms.reduce((s,r)=>s+wl(r),0);
   document.getElementById('etot').textContent=fr(gl,gh);
   document.getElementById('emeta').textContent=`${rooms.length} room${rooms.length!==1?'s':''} · ${Math.round(tf)} sqft floor · ${Math.round(tw)} sqft walls`;
   const c=document.getElementById('econt');
-  c.innerHTML=`<div class="mgrid">${[['Floor Sqft',Math.round(tf)],['Wall Sqft',Math.round(tw)],['Rooms',rooms.length],['Scope',its.length+' items']].map(([l,v])=>`<div class="mcard"><div class="mv">${v}</div><div class="ml">${l.toUpperCase()}</div></div>`).join('')}</div>
-  <div class="rsum"><div class="rsumhdr">ROOMS</div>${rooms.map(r=>`<div class="rrow"><div class="rn">${r.name}</div><div class="rd">${r.length}'×${r.width}'×${r.height}'</div><div class="rs">${Math.round(fl(r))} sqft</div></div>`).join('')}</div>
-  ${its.map((it,i)=>`<div class="li"><div class="lihdr" onclick="togLi(${i})"><div class="liico">${it.icon}</div><div class="linm">${it.name.toUpperCase()}</div><div class="lirng">${fr(it.lo,it.hi)}</div><div class="liarr" id="la${i}">▼</div></div><div class="libd" id="lb${i}">${it.bd.map(b=>`<div class="bdrow"><span class="bdlbl">${b.l}</span><span class="bdval">${b.v}</span></div>`).join('')}<div class="bdnote">ℹ️ ${it.note}</div></div></div>`).join('')}
-  <div class="gtcard"><div class="gtlbl">Total Range</div><div class="gtval">${fr(gl,gh)}</div><div class="gtsub">${fd(gl)} low · ${fd(gh)} high</div></div>
-  <div class="disc"><div class="discttl">⚠️ Internal Use Only</div><div class="discbdy">Ballpark based on CSC project data. Final pricing needs site visit + Nusii proposal.</div></div><div style="height:10px"></div>`;
-  window._its=its;window._gl=gl;window._gh=gh;
-}
-function togLi(i){document.getElementById('lb'+i).classList.toggle('open');document.getElementById('la'+i).classList.toggle('open');}
+  c.innerHTML=`
+    <div class="mgrid">${[['Floor Sqft',Math.round(tf)],['Wall Sqft',Math.round(tw)],['Rooms',rooms.length],['Scope',its.length+' items']].map(([l,v])=>`<div class="mcard"><div class="mv">${v}</div><div class="ml">${l.toUpperCase()}</div></div>`).join('')}</div>
+    <div class="rsum"><div class="rsumhdr">ROOMS</div>${rooms.map(r=>`<div class="rrow"><div class="rn">${r.name}</div><div class="rd">${r.length}'×${r.width}'×${r.height}'</div><div class="rs">${Math.round(fl(r))} sqft</div></div>`).join('')}</div>
+    ${its.map((it,i)=>`<div class="li"><div class="lihdr" onclick="togLi(${i})">
+      <div class="liico">${it.icon}</div><div class="linm">${it.name.toUpperCase()}</div>
+      <div class="lirng">${fr(it.lo,it.hi)}</div><div class="liarr" id="la${i}">▼</div></div>
+      <div class="libd" id="lb${i}">${it.bd.map(b=>`<div class="bdrow"><span class="bdlbl">${b.l}</span><span class="bdval">${b.v}</span></div>`).join('')}<div class="bdnote">ℹ️ ${it.note}</div></div>
+    </div>`).join('')}
+    <div class="gtcard"><div class="gtlbl">Total Range</div><div class="gtval">${fr(gl,gh)}</div><div class="gtsub">${fd(gl)} low · ${fd(gh)} high</div></div>
+    <div class="disc"><div class="discttl">⚠️ Internal Use Only</div><div class="discbdy">Ballpark based on CSC project data. Final pricing needs site visit + Nusii proposal.</div></div>
+    <div style="height:8px"></div>`;
+  window._its=its; window._gl=gl; window._gh=gh;
 
+  // Show/hide integration buttons
+  document.getElementById('ghl-btn').style.display=ls('csc_ghl')?'flex':'none';
+  document.getElementById('cc-btn').style.display=ls('csc_cc')?'flex':'none';
+  document.getElementById('send-status').className='send-status';
+}
+
+function togLi(i){ document.getElementById('lb'+i).classList.toggle('open'); document.getElementById('la'+i).classList.toggle('open'); }
+
+// ═══════════════════════════════════════════════
+// SHARE / COPY
+// ═══════════════════════════════════════════════
 function buildTxt(){
-  const its=window._its||[];
-  return['━━━━━━━━━━━━━━━━━━━','CSC FIELD ESTIMATE','━━━━━━━━━━━━━━━━━━━',`${rooms.length} room(s)`,'',...its.map(i=>`${i.icon} ${i.name}\n   ${fd(i.lo)} – ${fd(i.hi)}`),`\nTOTAL: ${fr(window._gl||0,window._gh||0)}`,'','⚠️ Ballpark only. Final price via Nusii.','━━━━━━━━━━━━━━━━━━━','Creative Smart Contractors','creativesmartcontractors.com'].join('\n');
+  const its=window._its||[], job=document.getElementById('job-name').value||'';
+  return['━━━━━━━━━━━━━━━━━━━','CSC FIELD ESTIMATE',job?`Job: ${job}`:'','━━━━━━━━━━━━━━━━━━━',
+    `${rooms.length} room(s) · ${Math.round(rooms.reduce((s,r)=>s+fl(r),0))} sqft`,
+    '',...its.map(i=>`${i.icon} ${i.name}\n   ${fd(i.lo)} – ${fd(i.hi)}`),
+    `\nTOTAL: ${fr(window._gl||0,window._gh||0)}`,'',
+    '⚠️ Ballpark only. Final price via Nusii.','━━━━━━━━━━━━━━━━━━━',
+    'Creative Smart Contractors','creativesmartcontractors.com'].filter(x=>x!==undefined).join('\n');
 }
-async function shareEst(){const t=buildTxt();if(navigator.share){try{await navigator.share({title:'CSC Estimate',text:t});return;}catch{}}clip(t);}
-function copyEst(){clip(buildTxt());}
-function clip(t){if(navigator.clipboard){navigator.clipboard.writeText(t).then(()=>toast('✓ Copied'));}else{const x=document.createElement('textarea');x.value=t;x.style.cssText='position:fixed;opacity:0';document.body.appendChild(x);x.select();document.execCommand('copy');document.body.removeChild(x);toast('✓ Copied');}}
 
-// COVER
+async function shareEst(){
+  const txt=buildTxt();
+  if(navigator.share){ try{ await navigator.share({title:'CSC Estimate',text:txt}); return; }catch{} }
+  clip(txt);
+}
+function copyEst(){ clip(buildTxt()); }
+function clip(t){
+  if(navigator.clipboard){ navigator.clipboard.writeText(t).then(()=>toast('✓ Copied to clipboard')); }
+  else{ const x=document.createElement('textarea'); x.value=t; x.style.cssText='position:fixed;opacity:0'; document.body.appendChild(x); x.select(); document.execCommand('copy'); document.body.removeChild(x); toast('✓ Copied'); }
+}
+
+// ═══════════════════════════════════════════════
+// GHL WEBHOOK
+// ═══════════════════════════════════════════════
+async function sendGHL(){
+  const url=ls('csc_ghl');
+  if(!url){ toast('Add GHL webhook URL in Settings'); show('scr-settings'); return; }
+  const btn=document.getElementById('ghl-btn');
+  btn.textContent='Sending…'; btn.disabled=true;
+  const payload=buildWebhookPayload('ghl');
+  try{
+    await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    showSendStatus('ok','✓ Sent to GoHighLevel successfully');
+  }catch(e){
+    showSendStatus('err','GHL send failed — check webhook URL in Settings');
+  }
+  btn.innerHTML='<span>⚡</span> Send to GHL'; btn.disabled=false;
+}
+
+// ═══════════════════════════════════════════════
+// COMPANYCAM ZAPIER WEBHOOK
+// ═══════════════════════════════════════════════
+async function sendCC(){
+  const url=ls('csc_cc');
+  if(!url){ toast('Add CompanyCam Zapier webhook in Settings'); show('scr-settings'); return; }
+  const btn=document.getElementById('cc-btn');
+  btn.textContent='Sending…'; btn.disabled=true;
+
+  const payload=buildWebhookPayload('companycam');
+
+  // If we have a floor plan image, include it as base64
+  if(fpImageDataUrl){
+    payload.floor_plan_image=fpImageDataUrl;
+  }
+
+  try{
+    await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    showSendStatus('ok','✓ Sent to CompanyCam via Zapier');
+  }catch(e){
+    showSendStatus('err','CompanyCam send failed — check Zapier webhook URL');
+  }
+  btn.innerHTML='<span>📷</span> CompanyCam'; btn.disabled=false;
+}
+
+function buildWebhookPayload(source){
+  const its=window._its||[];
+  const job=document.getElementById('job-name').value||'';
+  return{
+    source,
+    timestamp:new Date().toISOString(),
+    job_name:job,
+    total_low:window._gl||0,
+    total_high:window._gh||0,
+    total_range:fr(window._gl||0,window._gh||0),
+    total_floor_sqft:Math.round(rooms.reduce((s,r)=>s+fl(r),0)),
+    total_wall_sqft:Math.round(rooms.reduce((s,r)=>s+wl(r),0)),
+    room_count:rooms.length,
+    rooms:rooms.map(r=>({name:r.name,length:parseFloat(r.length),width:parseFloat(r.width),height:parseFloat(r.height),floor_sqft:Math.round(fl(r)),wall_sqft:Math.round(wl(r)),ai_measured:r._ai||false,ai_confidence:r._conf||null})),
+    line_items:its.map(i=>({name:i.name,low:i.lo,high:i.hi,range:fr(i.lo,i.hi)})),
+    estimate_text:buildTxt(),
+    company:'Creative Smart Contractors',
+    license:'TGC133460',
+  };
+}
+
+function showSendStatus(type, msg){
+  const el=document.getElementById('send-status');
+  el.textContent=msg; el.className='send-status '+type;
+  setTimeout(()=>el.className='send-status',5000);
+}
+
+// ═══════════════════════════════════════════════
+// LOCAL SAVE
+// ═══════════════════════════════════════════════
+function saveEst(){
+  const saves=JSON.parse(ls('csc_saves')||'[]');
+  const job=document.getElementById('job-name').value||`Job ${new Date().toLocaleDateString()}`;
+  const entry={
+    id:Date.now(), job, date:new Date().toLocaleDateString(),
+    total:fr(window._gl||0,window._gh||0),
+    rooms:JSON.parse(JSON.stringify(rooms)),
+    sel:JSON.parse(JSON.stringify(sel)),
+  };
+  saves.unshift(entry);
+  if(saves.length>20) saves.pop();
+  lsSet('csc_saves',JSON.stringify(saves));
+  toast('✓ Estimate saved'); renderSaves();
+}
+
+function renderSaves(){
+  const saves=JSON.parse(ls('csc_saves')||'[]');
+  const sec=document.getElementById('saves-section');
+  if(!saves.length){ sec.style.display='none'; return; }
+  sec.style.display='block';
+  document.getElementById('saves-list').innerHTML=saves.map(s=>`
+    <div class="save-row">
+      <div class="save-info">
+        <div class="save-name">${s.job}</div>
+        <div class="save-meta">${s.date} · ${s.rooms?.length||0} rooms</div>
+      </div>
+      <div class="save-total">${s.total}</div>
+      <button class="save-del" onclick="deleteSave(${s.id})">✕</button>
+    </div>`).join('');
+}
+
+function deleteSave(id){
+  let saves=JSON.parse(ls('csc_saves')||'[]');
+  saves=saves.filter(s=>s.id!==id);
+  lsSet('csc_saves',JSON.stringify(saves));
+  renderSaves();
+}
+
+// ═══════════════════════════════════════════════
+// COVER ROWS (home)
+// ═══════════════════════════════════════════════
 function renderCover(){
   const r={drywall:'$2.50–$5/sqft',flooring:'$4–$10/sqft',kitchen:'$15K–$45K',bathroom:'$8K–$25K',full:'$50–$120/sqft'};
-  document.getElementById('cover-rows').innerHTML=WT.map(w=>`<div class="crow"><span style="font-size:18px;width:24px;text-align:center">${w.icon}</span><span style="flex:1;font-family:var(--fm);font-size:12px;font-weight:500">${w.name.toUpperCase()}</span><span style="font-family:var(--fm);font-size:11px;color:var(--muted)">${r[w.id]}</span></div>`).join('');
+  document.getElementById('cover-rows').innerHTML=WT.map(w=>`<div class="crow">
+    <span style="font-size:18px;width:24px;text-align:center">${w.icon}</span>
+    <span style="flex:1;font-family:var(--fm);font-size:12px;font-weight:500">${w.name.toUpperCase()}</span>
+    <span style="font-family:var(--fm);font-size:11px;color:var(--muted)">${r[w.id]}</span>
+  </div>`).join('');
 }
 
-// TOAST
+// ═══════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════
+function ls(k){ try{ return localStorage.getItem(k); }catch{ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch{} }
+function lsRm(k){ try{ localStorage.removeItem(k); }catch{} }
 let _tt;
-function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('on'),2400);}
+function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(_tt); _tt=setTimeout(()=>t.classList.remove('on'),2600); }
 </script>
 </body>
 </html>
